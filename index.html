@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Musical Library</title>
+    <title>The Magical Library</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --paper: #fff9f0;
+            --ink: #2c1e1a;
+        }
+
         body {
-            background-color: #1a1210;
+            background-color: #120d0c;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -19,124 +24,164 @@
             font-family: 'Playfair Display', serif;
         }
 
-        /* Library Grid Background */
+        /* Library Background */
         .library-container {
             position: absolute;
             width: 100%;
             height: 100%;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(25px, 1fr));
-            grid-auto-rows: 90px;
-            gap: 5px;
-            padding: 10px;
-            opacity: 0.2;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            grid-auto-rows: 100px;
+            gap: 8px;
+            padding: 20px;
+            opacity: 0.15;
             z-index: 1;
         }
 
         .shelf-book {
             width: 100%;
             height: 100%;
-            border-radius: 2px;
-            transition: all 0.2s;
+            border-radius: 3px;
+            transition: all 0.1s;
         }
 
-        /* UI Elements */
         .ui-layer {
             position: relative;
             z-index: 10;
             text-align: center;
+            width: 100%;
         }
 
         h1 {
-            color: #e0d5d0;
-            font-size: 2.5rem;
-            margin-bottom: 30px;
+            color: #d7ccc8;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
             text-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
-        /* 3D Book Logic */
+        /* The 3D Book Stage */
         .stage {
-            width: 300px;
-            height: 350px;
-            perspective: 1500px;
+            width: 100%;
+            height: 400px;
+            perspective: 2000px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 40px;
         }
 
-        .book {
-            width: 200px;
+        .book-wrap {
+            width: 200px; /* Closed width */
             height: 280px;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), width 1.5s;
             visibility: hidden;
         }
 
-        .book.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
-        
-        /* The Actual Flip */
-        .book.open {
-            transform: rotateY(-180deg) translateX(100px);
+        .book-wrap.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
+
+        /* When open, the container widens to fit both pages */
+        .book-wrap.open {
+            width: 440px; 
+            transform: rotateY(0deg);
         }
 
-        .book-cover, .book-inside {
+        .page {
             position: absolute;
-            width: 100%;
+            width: 50%;
             height: 100%;
-            border-radius: 4px 12px 12px 4px;
+            top: 0;
+            right: 0;
+            background: var(--paper);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.1);
+            transform-origin: left;
+            transition: transform 1.5s;
             backface-visibility: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 5px 5px 25px rgba(0,0,0,0.6);
         }
 
-        .book-cover {
-            z-index: 2;
+        /* Front Cover */
+        .cover {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            top: 0;
+            right: 0;
+            z-index: 5;
             transform-origin: left;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.8);
-            font-family: 'Dancing Script', cursive;
-            font-size: 1.2rem;
-            padding: 20px;
+            transition: transform 1.5s;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            font-family: 'Dancing Script', cursive;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
         }
 
-        /* The page that stays flat while cover flips */
-        .book-inside {
-            background-color: #fffaf0;
-            z-index: 1;
-            transform: rotateY(180deg); /* Facing "backwards" so it shows when flipped */
-            font-size: 5rem;
-            color: #2c1e1a;
-            border: 1px solid #dcdcdc;
-            box-shadow: inset 5px 0 10px rgba(0,0,0,0.1);
+        .book-wrap.open .cover { transform: rotateY(-180deg); }
+
+        /* Left Page (The underside of the cover or a separate leaf) */
+        .page.left {
+            left: 0;
+            transform: rotateY(-180deg);
+            border-radius: 10px 0 0 10px;
+            background: linear-gradient(to right, #fff9f0 90%, #e6e0d5 100%);
+        }
+        .book-wrap.open .page.left { transform: rotateY(0deg); }
+
+        /* Right Page */
+        .page.right {
+            right: 0;
+            border-radius: 0 10px 10px 0;
+            background: linear-gradient(to left, #fff9f0 90%, #e6e0d5 100%);
+            border-left: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .number-box {
+            font-size: 6rem;
+            color: var(--ink);
+            opacity: 0;
+            transition: opacity 0.5s 1s;
+        }
+        .book-wrap.open .number-box { opacity: 1; }
+
+        /* Page details (lines to simulate text) */
+        .fake-text {
+            width: 70%;
+            height: 4px;
+            background: #eee;
+            margin: 10px 0;
+            border-radius: 2px;
         }
 
         button {
-            padding: 18px 45px;
-            font-size: 1.3rem;
-            background: linear-gradient(145deg, #8d6e63, #5d4037);
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: #8d6e63;
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             font-family: 'Playfair Display', serif;
-            transition: 0.3s;
         }
 
-        button:hover { transform: scale(1.05); background: #a1887f; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:disabled { background: #444; }
 
         @keyframes flyIn {
-            0% { transform: scale(0) translateZ(-500px) rotateX(45deg); opacity: 0; }
-            100% { transform: scale(1) translateZ(0) rotateX(0); opacity: 1; }
+            0% { transform: scale(0) translateZ(-500px); opacity: 0; }
+            100% { transform: scale(1) translateZ(0); opacity: 1; }
         }
 
-        .highlight { background: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.3); z-index: 5; }
+        .highlight { background: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.4); z-index: 5; }
     </style>
 </head>
 <body>
@@ -144,35 +189,61 @@
     <div class="library-container" id="library"></div>
 
     <div class="ui-layer">
-        <h1 id="status">What should we read?</h1>
+        <h1 id="status">Behold the Archive...</h1>
         
         <div class="stage">
-            <div class="book" id="main-book">
-                <div class="book-cover" id="cover">Your Next Story...</div>
-                <div class="book-inside">
-                    <span id="number-display"></span>
+            <div class="book-wrap" id="book">
+                <!-- Left Page -->
+                <div class="page left">
+                    <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                        <div class="fake-text"></div><div class="fake-text" style="width: 50%"></div>
+                        <div class="fake-text"></div><div class="fake-text"></div>
+                    </div>
                 </div>
+                <!-- Right Page -->
+                <div class="page right">
+                    <span class="number-box" id="number-display">0</span>
+                </div>
+                <!-- Cover -->
+                <div class="cover" id="cover">What shall we read today?</div>
             </div>
         </div>
 
-        <button id="draw-btn" onclick="startSelection()">Pick a Book</button>
+        <button id="draw-btn" onclick="startSelection()">Draw a Book</button>
     </div>
 
-    <!-- Background Audio Elements -->
-    <audio id="audio-warm" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio> <!-- Orchestral -->
-    <audio id="audio-cool" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio> <!-- Piano/Chill -->
-    <audio id="audio-bright" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"></audio> <!-- Upbeat -->
+    <!-- Music Themes -->
+    <audio id="audio-warm" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <audio id="audio-cool" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
+    <audio id="audio-bright" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
 
     <script>
+        const totalBooks = 234;
         const library = document.getElementById('library');
-        const mainBook = document.getElementById('main-book');
+        const bookWrap = document.getElementById('book');
         const bookCover = document.getElementById('cover');
         const numberDisplay = document.getElementById('number-display');
         const statusText = document.getElementById('status');
         const drawBtn = document.getElementById('draw-btn');
         
+        // Initialize Web Audio API for roulette sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playPop(pitch) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200 + (pitch * 2), audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
         const shelfBooks = [];
-        for (let i = 0; i < 300; i++) {
+        for (let i = 0; i < totalBooks; i++) {
             const b = document.createElement('div');
             b.className = 'shelf-book';
             b.style.backgroundColor = `hsl(${Math.random() * 360}, 20%, 25%)`;
@@ -183,68 +254,71 @@
         let currentAudio = null;
 
         function startSelection() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             
             drawBtn.disabled = true;
-            mainBook.classList.remove('open', 'visible');
-            statusText.innerText = "Browsing the collection...";
+            bookWrap.classList.remove('open', 'visible');
+            statusText.innerText = "Consulting the shelves...";
             
             let count = 0;
             let lastIdx = -1;
 
             const interval = setInterval(() => {
                 if (lastIdx > -1) shelfBooks[lastIdx].classList.remove('highlight');
-                lastIdx = Math.floor(Math.random() * 300);
+                lastIdx = Math.floor(Math.random() * totalBooks);
                 shelfBooks[lastIdx].classList.add('highlight');
                 
+                // Play roulette sound with pitch based on index
+                playPop(lastIdx);
+                
                 count++;
-                if (count > 20) {
+                if (count > 30) {
                     clearInterval(interval);
                     shelfBooks[lastIdx].classList.remove('highlight');
                     finalizeSelection();
                 }
-            }, 100);
+            }, 80);
         }
 
         function finalizeSelection() {
-            const result = Math.floor(Math.random() * 300) + 1;
+            const result = Math.floor(Math.random() * totalBooks) + 1;
             const hue = Math.floor(Math.random() * 360);
             
-            // 1. Randomize Size & Color
-            const h = Math.floor(Math.random() * 60) + 250;
+            // Randomize Size
+            const h = Math.floor(Math.random() * 40) + 260;
             const w = Math.floor(Math.random() * 40) + 180;
-            mainBook.style.height = h + 'px';
-            mainBook.style.width = w + 'px';
-            bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
+            bookWrap.style.height = h + 'px';
+            bookWrap.style.width = (w/2) + 'px'; // width of closed book container
             
-            // 2. Map Music to Color
-            // Warm (0-120), Cool (121-240), Bright (241-360)
+            bookCover.style.backgroundColor = `hsl(${hue}, 40%, 35%)`;
+            
+            // Music Selection
             if (hue < 120) currentAudio = document.getElementById('audio-warm');
             else if (hue < 240) currentAudio = document.getElementById('audio-cool');
             else currentAudio = document.getElementById('audio-bright');
-            
             currentAudio.play();
 
-            // 3. Reveal Sequence
+            // Setup display
             numberDisplay.innerText = result;
-            mainBook.classList.add('visible');
+            bookWrap.classList.add('visible');
             statusText.innerText = "Found it!";
 
             setTimeout(() => {
-                mainBook.classList.add('open'); // This triggers the flip
-                statusText.innerText = `You are reading Book #${result}`;
+                bookWrap.classList.add('open');
+                statusText.innerText = `Book ${result} was chosen!`;
                 
                 confetti({
-                    particleCount: 120,
-                    spread: 80,
+                    particleCount: 150,
+                    spread: 70,
                     origin: { y: 0.7 },
-                    colors: [`hsl(${hue}, 45%, 35%)`, '#fff']
+                    colors: [`hsl(${hue}, 40%, 35%)`, '#fff']
                 });
 
                 setTimeout(() => {
                     drawBtn.disabled = false;
                     drawBtn.innerText = "Pick Another";
-                }, 2000);
+                }, 2500);
             }, 1200);
         }
     </script>
