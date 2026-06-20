@@ -3,182 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Reading Roulette</title>
+    <title>The Library Picker</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --wood-color: #3e2723;
+        }
+
         body {
-            background-color: #f5efe6;
+            background-color: #2c1e1a;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
+            overflow: hidden;
             font-family: 'Playfair Display', serif;
+        }
+
+        /* The Library Background */
+        .library-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+            grid-auto-rows: 80px;
+            gap: 4px;
+            padding: 10px;
+            opacity: 0.3;
+            z-index: 1;
             overflow: hidden;
         }
 
-        h1 {
-            color: #5d4037;
-            margin-bottom: 50px;
-            font-size: 2.5rem;
-        }
-
-        /* 3D Book Container */
-        .scene {
-            width: 200px;
-            height: 300px;
-            perspective: 1000px;
-            margin-bottom: 50px;
-        }
-
-        .book {
+        .shelf-book {
             width: 100%;
             height: 100%;
+            border-radius: 2px;
+            transition: background 0.1s;
+        }
+
+        /* Overlay UI */
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h1 {
+            color: #d7ccc8;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin: 0;
+        }
+
+        /* The Focused Book Stage */
+        .stage {
+            width: 300px;
+            height: 400px;
+            perspective: 1200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The Main Book */
+        .book {
+            width: 180px;
+            height: 260px;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
-            cursor: pointer;
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            visibility: hidden; /* Hidden until draw */
+        }
+
+        .book.visible {
+            visibility: visible;
+            animation: zoomIn 0.5s ease-out;
         }
 
         .book.open {
-            transform: rotateY(-160deg);
+            transform: rotateY(-150deg);
         }
 
         .book-cover, .book-page {
             position: absolute;
             width: 100%;
             height: 100%;
-            top: 0;
-            left: 0;
-            border-radius: 5px 15px 15px 5px;
+            border-radius: 3px 10px 10px 3px;
             backface-visibility: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 5px 5px 20px rgba(0,0,0,0.2);
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.5);
         }
 
         .book-cover {
-            background-color: #8d6e63;
-            color: white;
             z-index: 2;
             transform-origin: left;
-            border: 2px solid #5d4037;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .book-page {
             background-color: #fff9f0;
             z-index: 1;
-            font-size: 5rem;
+            font-size: 4rem;
             color: #333;
-            border: 1px solid #ddd;
-        }
-
-        .book-cover::after {
-            content: "Next Adventure?";
-            font-family: 'Dancing Script', cursive;
-            font-size: 1.5rem;
-            text-align: center;
-            padding: 20px;
+            transform: rotateY(0deg);
         }
 
         /* Button Styling */
         button {
             padding: 15px 40px;
             font-size: 1.2rem;
-            background-color: #5d4037;
+            background-color: #8d6e63;
             color: white;
             border: none;
-            border-radius: 30px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             font-family: 'Playfair Display', serif;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        button:hover {
-            background-color: #795548;
-            transform: translateY(-2px);
+        button:hover { background-color: #a1887f; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+
+        @keyframes zoomIn {
+            from { transform: scale(0) rotate(20deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Shuffling Number Text */
-        #number-display {
-            font-family: 'Playfair Display', serif;
-            font-weight: bold;
+        .highlight {
+            background-color: #fff !important;
+            box-shadow: 0 0 15px #fff;
+            transform: scale(1.2);
+            z-index: 2;
         }
     </style>
 </head>
 <body>
 
-    <h1 id="title">What are we reading next?</h1>
+    <div class="library-container" id="library"></div>
 
-    <div class="scene">
-        <div class="book" id="book">
-            <div class="book-cover"></div>
-            <div class="book-page">
-                <span id="number-display">?</span>
+    <div class="ui-layer">
+        <h1 id="status">Your Library is Waiting...</h1>
+        
+        <div class="stage">
+            <div class="book" id="main-book">
+                <div class="book-cover" id="cover"></div>
+                <div class="book-page">
+                    <span id="number-display"></span>
+                </div>
             </div>
         </div>
+
+        <button id="draw-btn" onclick="startSelection()">Pick a Book</button>
     </div>
 
-    <button id="draw-btn" onclick="startDraw()">Pick a Book</button>
-
     <script>
-        const book = document.getElementById('book');
+        const library = document.getElementById('library');
+        const mainBook = document.getElementById('main-book');
+        const bookCover = document.getElementById('cover');
         const numberDisplay = document.getElementById('number-display');
+        const statusText = document.getElementById('status');
         const drawBtn = document.getElementById('draw-btn');
-        const title = document.getElementById('title');
 
-        function startDraw() {
-            // Reset
+        // 1. Initialize the library background
+        const totalBooks = 300;
+        const shelfBooks = [];
+        
+        for (let i = 0; i < totalBooks; i++) {
+            const b = document.createElement('div');
+            b.className = 'shelf-book';
+            // Random dark colors for the shelf
+            const hue = Math.floor(Math.random() * 360);
+            b.style.backgroundColor = `hsl(${hue}, 30%, 30%)`;
+            library.appendChild(b);
+            shelfBooks.push(b);
+        }
+
+        function startSelection() {
             drawBtn.disabled = true;
-            book.classList.remove('open');
-            title.innerText = "Consulting the library...";
+            mainBook.classList.remove('open', 'visible');
+            statusText.innerText = "Searching the shelves...";
             
-            let counter = 0;
-            let shuffleInterval = setInterval(() => {
-                // Random numbers during "shuffling" phase
-                numberDisplay.innerText = Math.floor(Math.random() * 300) + 1;
-                counter++;
+            let count = 0;
+            let lastIdx = -1;
+
+            // Ping pong selection effect
+            const interval = setInterval(() => {
+                if (lastIdx > -1) shelfBooks[lastIdx].classList.remove('highlight');
                 
-                if (counter > 20) {
-                    clearInterval(shuffleInterval);
-                    revealResult();
+                lastIdx = Math.floor(Math.random() * totalBooks);
+                shelfBooks[lastIdx].classList.add('highlight');
+                
+                count++;
+                if (count > 25) {
+                    clearInterval(interval);
+                    shelfBooks[lastIdx].classList.remove('highlight');
+                    finalizeSelection();
                 }
             }, 80);
         }
 
-        function revealResult() {
-            // The final choice
-            const finalNumber = Math.floor(Math.random() * 300) + 1;
-            numberDisplay.innerText = finalNumber;
+        function finalizeSelection() {
+            // Pick the actual number
+            const result = Math.floor(Math.random() * 300) + 1;
+            
+            // Randomize the "Main Book" appearance
+            const randomHue = Math.floor(Math.random() * 360);
+            const randomHeight = Math.floor(Math.random() * 60) + 240; // 240px to 300px
+            const randomWidth = Math.floor(Math.random() * 40) + 160;  // 160px to 200px
+            
+            bookCover.style.backgroundColor = `hsl(${randomHue}, 40%, 40%)`;
+            mainBook.style.height = `${randomHeight}px`;
+            mainBook.style.width = `${randomWidth}px`;
+            
+            // Set number but don't show yet
+            numberDisplay.innerText = result;
 
-            // Animate book opening
+            // Animation sequence
+            mainBook.classList.add('visible');
+            statusText.innerText = "Found one!";
+
             setTimeout(() => {
-                book.classList.add('open');
-                title.innerText = "Happy Reading!";
+                mainBook.classList.add('open');
+                statusText.innerText = `Book #${result}`;
                 
-                // Celebration
                 confetti({
-                    particleCount: 150,
+                    particleCount: 100,
                     spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#8d6e63', '#f5efe6', '#d4a373']
+                    origin: { y: 0.7 },
+                    colors: [`hsl(${randomHue}, 40%, 40%)`, '#fff9f0']
                 });
 
-                // Re-enable button after a delay
                 setTimeout(() => {
                     drawBtn.disabled = false;
-                    drawBtn.innerText = "Try Again";
-                }, 2000);
-            }, 200);
+                    drawBtn.innerText = "Pick another book";
+                }, 1500);
+            }, 800);
         }
     </script>
 </body>
