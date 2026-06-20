@@ -10,8 +10,8 @@
         :root {
             --paper: #fff9f0;
             --ink: #2c1e1a;
-            --book-w: 240px; /* Width of the book when closed */
-            --book-h: 340px; /* Height of the book */
+            --book-w: 240px; 
+            --book-h: 340px; 
         }
 
         body {
@@ -80,11 +80,7 @@
         }
 
         .book.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
-
-        /* The Opening Animation */
-        .book.open {
-            transform: rotateY(0deg); /* Keeps the spine centered */
-        }
+        .book.open { transform: rotateY(0deg); }
 
         /* Pages & Cover Shared Styling */
         .leaf {
@@ -100,7 +96,7 @@
             border-radius: 2px 10px 10px 2px;
         }
 
-        /* The Right Page (The one that stays flat) */
+        /* The Right Page */
         .page-right {
             background: linear-gradient(to right, #e6e0d5 0%, var(--paper) 10%, var(--paper) 100%);
             display: flex;
@@ -111,12 +107,12 @@
             transform: rotateY(0deg);
         }
 
-        /* The Left Page (Hidden behind cover, revealed on flip) */
+        /* The Left Page */
         .page-left {
             background: linear-gradient(to left, #e6e0d5 0%, var(--paper) 10%, var(--paper) 100%);
             z-index: 2;
-            transform: rotateY(0deg); /* Flips with cover */
-            backface-visibility: visible; /* Need to see the "back" of this leaf */
+            transform: rotateY(0deg); 
+            backface-visibility: visible; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -125,7 +121,7 @@
             box-sizing: border-box;
         }
 
-        /* The Cover (Front) */
+        /* The Cover */
         .cover {
             background: #8d6e63;
             z-index: 4;
@@ -140,7 +136,7 @@
             border-left: 5px solid rgba(0,0,0,0.2);
         }
 
-        /* Action: Open Book */
+        /* Open Book Animations */
         .book.open .cover { transform: rotateY(-180deg); }
         .book.open .page-left { transform: rotateY(-180deg); }
 
@@ -194,12 +190,12 @@
         
         <div class="stage">
             <div class="book" id="book">
-                <!-- Page Right (Stays put) -->
+                <!-- Page Right -->
                 <div class="leaf page-right">
                     <div class="number-display" id="number-display">0</div>
                 </div>
 
-                <!-- Page Left & Cover (These two flip together) -->
+                <!-- Page Left -->
                 <div class="leaf page-left">
                     <div class="fake-text"></div>
                     <div class="fake-text" style="width: 60%"></div>
@@ -209,6 +205,7 @@
                     <div style="margin-top: 40px; font-style: italic; color: #a09586;">Chapter One</div>
                 </div>
 
+                <!-- Cover -->
                 <div class="leaf cover" id="cover">Your next adventure awaits...</div>
             </div>
         </div>
@@ -230,22 +227,37 @@
         const statusText = document.getElementById('status');
         const drawBtn = document.getElementById('draw-btn');
         
-        // Initialize Web Audio
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // --- AUDIO FIX HERE ---
+        let audioCtx;
 
         function playPop(pitch) {
+            // Create the audio context ONLY after the user clicks the button
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(150 + (pitch * 1.5), audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+            
+            // Scheduling slightly in the future (0.01s) guarantees it plays smoothly
+            const now = audioCtx.currentTime + 0.01;
+            
+            osc.frequency.setValueAtTime(150 + (pitch * 1.5), now);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            
+            osc.start(now);
+            osc.stop(now + 0.1);
         }
 
+        // Generate Library Background
         const shelfBooks = [];
         for (let i = 0; i < totalBooks; i++) {
             const b = document.createElement('div');
@@ -258,7 +270,6 @@
         let currentAudio = null;
 
         function startSelection() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             
             drawBtn.disabled = true;
@@ -273,6 +284,7 @@
                 lastIdx = Math.floor(Math.random() * totalBooks);
                 shelfBooks[lastIdx].classList.add('highlight');
                 
+                // Play roulette ping!
                 playPop(lastIdx);
                 
                 count++;
@@ -295,7 +307,7 @@
             bookObj.style.width = w + 'px';
             bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
             
-            // Music
+            // Select and Play Theme Music
             if (hue < 120) currentAudio = document.getElementById('audio-warm');
             else if (hue < 240) currentAudio = document.getElementById('audio-cool');
             else currentAudio = document.getElementById('audio-bright');
