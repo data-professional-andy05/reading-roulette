@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Magical Library</title>
+    <title>The Reading Roulette</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
     <style>
         :root {
             --paper: #fff9f0;
             --ink: #2c1e1a;
+            --book-w: 240px; /* Width of the book when closed */
+            --book-h: 340px; /* Height of the book */
         }
 
         body {
@@ -38,18 +40,16 @@
             z-index: 1;
         }
 
-        .shelf-book {
-            width: 100%;
-            height: 100%;
-            border-radius: 3px;
-            transition: all 0.1s;
-        }
+        .shelf-book { width: 100%; height: 100%; border-radius: 3px; transition: 0.1s; }
 
         .ui-layer {
             position: relative;
             z-index: 10;
             text-align: center;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
@@ -59,111 +59,111 @@
             text-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
-        /* The 3D Book Stage */
+        /* 3D Stage */
         .stage {
-            width: 100%;
-            height: 400px;
             perspective: 2000px;
+            width: 600px;
+            height: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .book-wrap {
-            width: 200px; /* Closed width */
-            height: 280px;
+        /* The Book Container */
+        .book {
+            width: var(--book-w);
+            height: var(--book-h);
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), width 1.5s;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
             visibility: hidden;
         }
 
-        .book-wrap.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
+        .book.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
 
-        /* When open, the container widens to fit both pages */
-        .book-wrap.open {
-            width: 440px; 
+        /* The Opening Animation */
+        .book.open {
+            transform: rotateY(0deg); /* Keeps the spine centered */
+        }
+
+        /* Pages & Cover Shared Styling */
+        .leaf {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transform-origin: left;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            backface-visibility: hidden;
+            box-shadow: 5px 5px 20px rgba(0,0,0,0.4);
+            border-radius: 2px 10px 10px 2px;
+        }
+
+        /* The Right Page (The one that stays flat) */
+        .page-right {
+            background: linear-gradient(to right, #e6e0d5 0%, var(--paper) 10%, var(--paper) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
             transform: rotateY(0deg);
         }
 
-        .page {
-            position: absolute;
-            width: 50%;
-            height: 100%;
-            top: 0;
-            right: 0;
-            background: var(--paper);
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.1);
-            transform-origin: left;
-            transition: transform 1.5s;
-            backface-visibility: hidden;
+        /* The Left Page (Hidden behind cover, revealed on flip) */
+        .page-left {
+            background: linear-gradient(to left, #e6e0d5 0%, var(--paper) 10%, var(--paper) 100%);
+            z-index: 2;
+            transform: rotateY(0deg); /* Flips with cover */
+            backface-visibility: visible; /* Need to see the "back" of this leaf */
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
         }
 
-        /* Front Cover */
+        /* The Cover (Front) */
         .cover {
-            position: absolute;
-            width: 50%;
-            height: 100%;
-            top: 0;
-            right: 0;
-            z-index: 5;
-            transform-origin: left;
-            transition: transform 1.5s;
-            backface-visibility: hidden;
+            background: #8d6e63;
+            z-index: 4;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
             color: white;
+            padding: 30px;
             font-family: 'Dancing Script', cursive;
-            border-radius: 0 5px 5px 0;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            font-size: 1.5rem;
+            border-left: 5px solid rgba(0,0,0,0.2);
         }
 
-        .book-wrap.open .cover { transform: rotateY(-180deg); }
+        /* Action: Open Book */
+        .book.open .cover { transform: rotateY(-180deg); }
+        .book.open .page-left { transform: rotateY(-180deg); }
 
-        /* Left Page (The underside of the cover or a separate leaf) */
-        .page.left {
-            left: 0;
-            transform: rotateY(-180deg);
-            border-radius: 10px 0 0 10px;
-            background: linear-gradient(to right, #fff9f0 90%, #e6e0d5 100%);
-        }
-        .book-wrap.open .page.left { transform: rotateY(0deg); }
-
-        /* Right Page */
-        .page.right {
-            right: 0;
-            border-radius: 0 10px 10px 0;
-            background: linear-gradient(to left, #fff9f0 90%, #e6e0d5 100%);
-            border-left: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .number-box {
-            font-size: 6rem;
+        /* Interior Details */
+        .number-display {
+            font-size: 7rem;
             color: var(--ink);
             opacity: 0;
-            transition: opacity 0.5s 1s;
+            transition: opacity 0.5s 1.2s;
         }
-        .book-wrap.open .number-box { opacity: 1; }
+        .book.open .number-display { opacity: 1; }
 
-        /* Page details (lines to simulate text) */
         .fake-text {
-            width: 70%;
-            height: 4px;
-            background: #eee;
-            margin: 10px 0;
+            width: 80%;
+            height: 3px;
+            background: #e0d9cf;
+            margin: 8px 0;
             border-radius: 2px;
         }
 
         button {
-            margin-top: 30px;
-            padding: 15px 40px;
+            margin-top: 20px;
+            padding: 18px 45px;
             font-size: 1.2rem;
             background: #8d6e63;
             color: white;
@@ -172,13 +172,14 @@
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
             font-family: 'Playfair Display', serif;
+            transition: 0.3s;
         }
-
-        button:disabled { background: #444; }
+        button:hover { transform: translateY(-3px); background: #a1887f; }
+        button:disabled { opacity: 0.5; }
 
         @keyframes flyIn {
-            0% { transform: scale(0) translateZ(-500px); opacity: 0; }
-            100% { transform: scale(1) translateZ(0); opacity: 1; }
+            0% { transform: scale(0) rotateX(30deg) translateZ(-500px); opacity: 0; }
+            100% { transform: scale(1) rotateX(0) translateZ(0); opacity: 1; }
         }
 
         .highlight { background: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.4); z-index: 5; }
@@ -192,20 +193,23 @@
         <h1 id="status">Behold the Archive...</h1>
         
         <div class="stage">
-            <div class="book-wrap" id="book">
-                <!-- Left Page -->
-                <div class="page left">
-                    <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-                        <div class="fake-text"></div><div class="fake-text" style="width: 50%"></div>
-                        <div class="fake-text"></div><div class="fake-text"></div>
-                    </div>
+            <div class="book" id="book">
+                <!-- Page Right (Stays put) -->
+                <div class="leaf page-right">
+                    <div class="number-display" id="number-display">0</div>
                 </div>
-                <!-- Right Page -->
-                <div class="page right">
-                    <span class="number-box" id="number-display">0</span>
+
+                <!-- Page Left & Cover (These two flip together) -->
+                <div class="leaf page-left">
+                    <div class="fake-text"></div>
+                    <div class="fake-text" style="width: 60%"></div>
+                    <div class="fake-text"></div>
+                    <div class="fake-text"></div>
+                    <div class="fake-text" style="width: 40%"></div>
+                    <div style="margin-top: 40px; font-style: italic; color: #a09586;">Chapter One</div>
                 </div>
-                <!-- Cover -->
-                <div class="cover" id="cover">What shall we read today?</div>
+
+                <div class="leaf cover" id="cover">Your next adventure awaits...</div>
             </div>
         </div>
 
@@ -220,20 +224,20 @@
     <script>
         const totalBooks = 234;
         const library = document.getElementById('library');
-        const bookWrap = document.getElementById('book');
+        const bookObj = document.getElementById('book');
         const bookCover = document.getElementById('cover');
         const numberDisplay = document.getElementById('number-display');
         const statusText = document.getElementById('status');
         const drawBtn = document.getElementById('draw-btn');
         
-        // Initialize Web Audio API for roulette sounds
+        // Initialize Web Audio
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playPop(pitch) {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(200 + (pitch * 2), audioCtx.currentTime);
+            osc.frequency.setValueAtTime(150 + (pitch * 1.5), audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
             osc.connect(gain);
@@ -246,7 +250,7 @@
         for (let i = 0; i < totalBooks; i++) {
             const b = document.createElement('div');
             b.className = 'shelf-book';
-            b.style.backgroundColor = `hsl(${Math.random() * 360}, 20%, 25%)`;
+            b.style.backgroundColor = `hsl(${Math.random() * 360}, 25%, 25%)`;
             library.appendChild(b);
             shelfBooks.push(b);
         }
@@ -258,8 +262,8 @@
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             
             drawBtn.disabled = true;
-            bookWrap.classList.remove('open', 'visible');
-            statusText.innerText = "Consulting the shelves...";
+            bookObj.classList.remove('open', 'visible');
+            statusText.innerText = "Searching the collection...";
             
             let count = 0;
             let lastIdx = -1;
@@ -269,55 +273,52 @@
                 lastIdx = Math.floor(Math.random() * totalBooks);
                 shelfBooks[lastIdx].classList.add('highlight');
                 
-                // Play roulette sound with pitch based on index
                 playPop(lastIdx);
                 
                 count++;
-                if (count > 30) {
+                if (count > 35) {
                     clearInterval(interval);
                     shelfBooks[lastIdx].classList.remove('highlight');
                     finalizeSelection();
                 }
-            }, 80);
+            }, 70);
         }
 
         function finalizeSelection() {
             const result = Math.floor(Math.random() * totalBooks) + 1;
             const hue = Math.floor(Math.random() * 360);
             
-            // Randomize Size
-            const h = Math.floor(Math.random() * 40) + 260;
-            const w = Math.floor(Math.random() * 40) + 180;
-            bookWrap.style.height = h + 'px';
-            bookWrap.style.width = (w/2) + 'px'; // width of closed book container
+            // Randomize Color & Size slightly
+            const h = Math.floor(Math.random() * 40) + 320;
+            const w = Math.floor(Math.random() * 30) + 220;
+            bookObj.style.height = h + 'px';
+            bookObj.style.width = w + 'px';
+            bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
             
-            bookCover.style.backgroundColor = `hsl(${hue}, 40%, 35%)`;
-            
-            // Music Selection
+            // Music
             if (hue < 120) currentAudio = document.getElementById('audio-warm');
             else if (hue < 240) currentAudio = document.getElementById('audio-cool');
             else currentAudio = document.getElementById('audio-bright');
             currentAudio.play();
 
-            // Setup display
             numberDisplay.innerText = result;
-            bookWrap.classList.add('visible');
-            statusText.innerText = "Found it!";
+            bookObj.classList.add('visible');
+            statusText.innerText = "A choice has been made!";
 
             setTimeout(() => {
-                bookWrap.classList.add('open');
-                statusText.innerText = `Book ${result} was chosen!`;
+                bookObj.classList.add('open');
+                statusText.innerText = `You are reading Book #${result}`;
                 
                 confetti({
                     particleCount: 150,
                     spread: 70,
                     origin: { y: 0.7 },
-                    colors: [`hsl(${hue}, 40%, 35%)`, '#fff']
+                    colors: [`hsl(${hue}, 45%, 35%)`, '#fff']
                 });
 
                 setTimeout(() => {
                     drawBtn.disabled = false;
-                    drawBtn.innerText = "Pick Another";
+                    drawBtn.innerText = "Draw Again";
                 }, 2500);
             }, 1200);
         }
