@@ -28,7 +28,7 @@
 
         .shelf-book { width: 100%; height: 100%; border-radius: 3px; transition: 0.1s; }
         .ui-layer { position: relative; z-index: 10; text-align: center; width: 100%; }
-        h1 { color: #d7ccc8; font-size: 2.2rem; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        h1 { color: #d7ccc8; font-size: 2.2rem; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.3s;}
 
         .stage { perspective: 2000px; width: 600px; height: 420px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 
@@ -42,7 +42,7 @@
 
         .leaf {
             position: absolute; width: 100%; height: 100%; top: 0; left: 0;
-            transform-origin: left; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), background-image 0.5s ease-in;
+            transform-origin: left; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
             backface-visibility: hidden; box-shadow: 5px 5px 20px rgba(0,0,0,0.4); border-radius: 2px 10px 10px 2px;
         }
 
@@ -62,9 +62,9 @@
             text-align: center; color: white; padding: 20px; font-family: 'Dancing Script', cursive; font-size: 1.5rem;
             border-left: 5px solid rgba(0,0,0,0.4); box-shadow: inset 5px 0 15px rgba(0,0,0,0.3);
             
-            /* Background image sizing */
+            /* Enhanced Image Sizing */
             background-size: cover; background-position: center; background-repeat: no-repeat;
-            overflow: hidden; word-wrap: break-word;
+            overflow: hidden; word-wrap: break-word; transition: background-image 0.5s ease-in-out;
         }
 
         .book.open .cover { transform: rotateY(-180deg); }
@@ -85,13 +85,14 @@
         .divider { width: 50px; height: 2px; background: #cbbca8; margin: 15px auto; }
         .placeholder-text { color: #a09586; font-style: italic; font-size: 0.9rem; }
 
-        button {
+        .main-btn {
             margin-top: 20px; padding: 18px 45px; font-size: 1.2rem; background: #8d6e63; color: white;
             border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            font-family: 'Playfair Display', serif; transition: 0.3s;
+            font-family: 'Playfair Display', serif; transition: all 0.3s;
         }
-        button:hover { transform: translateY(-3px); background: #a1887f; }
-        button:disabled { opacity: 0.5; }
+        .main-btn:hover { transform: translateY(-3px); background: #a1887f; box-shadow: 0 15px 25px rgba(0,0,0,0.4); }
+        .main-btn:disabled { opacity: 0.5; transform: none; cursor: not-allowed; }
+        .main-btn.btn-action { background: #4e342e; font-weight: bold; border: 2px solid #d7ccc8; }
 
         @keyframes flyIn {
             0% { transform: scale(0) rotateX(30deg) translateZ(-500px); opacity: 0; }
@@ -99,7 +100,6 @@
         }
 
         .highlight { background: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.4); z-index: 5; }
-        .loading-text { font-size: 1rem; opacity: 0.7; margin-top: 10px; font-style: italic; display: none;}
     </style>
 </head>
 <body>
@@ -131,8 +131,7 @@
             </div>
         </div>
 
-        <button id="draw-btn" onclick="startSelection()">Draw a Book</button>
-        <div id="loading-indicator" class="loading-text">Summoning the tomes...</div>
+        <button id="main-btn" class="main-btn" onclick="handleMainAction()">Draw a Book</button>
     </div>
 
     <!-- Music -->
@@ -141,13 +140,15 @@
     <audio id="audio-bright" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
 
     <script>
+        // Spanish Titles Included for Testing
         const booksData = [
-            { Titulo: "A Court of Thorns and Roses", Autor: "Sarah J. Maas", Saga: "ACOTAR", Orden: "1" },
-            { Titulo: "The Final Empire", Autor: "Brandon Sanderson", Saga: "Mistborn", Orden: "1" },
-            { Titulo: "The Hobbit", Autor: "J.R.R. Tolkien", Saga: "", Orden: "" },
-            { Titulo: "Pride and Prejudice", Autor: "Jane Austen", Saga: "", Orden: "" },
-            { Titulo: "Dune", Autor: "Frank Herbert", Saga: "Dune Chronicles", Orden: "1" },
-            { Titulo: "Iron Flame", Autor: "Rebecca Yarros", Saga: "The Empyrean", Orden: "2" }
+            { Titulo: "Una corte de rosas y espinas", Autor: "Sarah J. Maas", Saga: "ACOTAR", Orden: "1" },
+            { Titulo: "El Imperio Final", Autor: "Brandon Sanderson", Saga: "Nacidos de la Bruma", Orden: "1" },
+            { Titulo: "El hobbit", Autor: "J.R.R. Tolkien", Saga: "", Orden: "" },
+            { Titulo: "Orgullo y prejuicio", Autor: "Jane Austen", Saga: "", Orden: "" },
+            { Titulo: "Dune", Autor: "Frank Herbert", Saga: "Crónicas de Dune", Orden: "1" },
+            { Titulo: "Alas de hierro", Autor: "Rebecca Yarros", Saga: "Empíreo", Orden: "2" },
+            { Titulo: "El nombre del viento", Autor: "Patrick Rothfuss", Saga: "Crónica del Asesino de Reyes", Orden: "1" }
         ];
 
         const totalBooks = booksData.length;
@@ -156,8 +157,7 @@
         const bookCover = document.getElementById('cover');
         const coverText = document.getElementById('cover-text');
         const statusText = document.getElementById('status');
-        const drawBtn = document.getElementById('draw-btn');
-        const loadingIndicator = document.getElementById('loading-indicator');
+        const mainBtn = document.getElementById('main-btn');
 
         const tituloDisplay = document.getElementById('titulo-display');
         const autorDisplay = document.getElementById('autor-display');
@@ -168,6 +168,10 @@
         let audioCtx;
         let currentAudio = null;
         let chosenBook = null;
+        let currentHue = 0;
+        
+        // App States: 'IDLE' -> 'SPINNING' -> 'WAITING_TO_OPEN' -> 'OPENED'
+        let appState = 'IDLE'; 
 
         function playPop(pitch) {
             if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -182,9 +186,7 @@
             gain.gain.setValueAtTime(0.1, now);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
             
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
+            osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(now); osc.stop(now + 0.1);
         }
 
@@ -205,31 +207,32 @@
             shelfBooks.push(b);
         }
 
-        // --- THE ROBUST FETCH ENGINE ---
+        // --- THE UPGRADED FETCH ENGINE ---
         async function fetchBookCover(title, author) {
             const query = encodeURIComponent(`${title} ${author}`);
             
-            // 1. Google Books (Checking top 3 results, not just the first one)
+            // 1. Google Books (Now checks TOP 10 results to find one with an image)
             try {
-                console.log(`Searching Google Books for: ${title}`);
-                const gbRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=3`);
+                console.log(`Checking Google Books for: ${title}`);
+                const gbRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=10`);
                 const gbData = await gbRes.json();
                 
                 if (gbData.items) {
                     for (let item of gbData.items) {
                         if (item.volumeInfo?.imageLinks?.thumbnail) {
                             let imgUrl = item.volumeInfo.imageLinks.thumbnail;
-                            // Force secure HTTPS link
-                            return imgUrl.replace('http:', 'https:'); 
+                            // Clean up Google's URL: Force HTTPS, remove curled edge, and slightly increase size
+                            imgUrl = imgUrl.replace('http:', 'https:').replace('&edge=curl', '') + '&zoom=1'; 
+                            return imgUrl;
                         }
                     }
                 }
             } catch (e) { console.warn("Google Books API Error:", e); }
 
-            // 2. OpenLibrary Fallback (Checking top 3 results)
+            // 2. OpenLibrary Fallback (Now explicitly searches Title & Author fields, Top 10)
             try {
                 console.log(`Falling back to OpenLibrary for: ${title}`);
-                const olRes = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=3`);
+                const olRes = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=10`);
                 const olData = await olRes.json();
                 
                 if (olData.docs) {
@@ -241,57 +244,74 @@
                 }
             } catch (e) { console.warn("OpenLibrary API Error:", e); }
 
-            return null; // Both failed, we will use the color fallback
+            return null; // Both completely failed
         }
 
-        // --- APPLY COVER SAFELY IN THE BACKGROUND ---
         function loadAndApplyCover(bookData, fallbackHue) {
-            // First, immediately set the color fallback just in case
+            // First apply the fallback immediately
             bookCover.style.backgroundImage = 'none';
             bookCover.style.backgroundColor = `hsl(${fallbackHue}, 45%, 35%)`;
             coverText.style.display = 'block';
             coverText.innerText = bookData.Titulo;
 
             fetchBookCover(bookData.Titulo, bookData.Autor).then(url => {
-                if (!url) {
-                    console.log(`No cover found for ${bookData.Titulo}`);
-                    return; 
-                }
+                if (!url) { console.log(`No cover found for ${bookData.Titulo}`); return; }
 
                 console.log(`Cover found! Downloading from: ${url}`);
-                
-                // Pre-load the image so it doesn't "glitch" onto the book half-loaded
                 const img = new Image();
                 img.src = url;
                 img.onload = () => {
-                    // Only apply if they haven't rapidly clicked "Draw Again"
+                    // Only apply if they haven't started a new draw
                     if (chosenBook === bookData) {
                         bookCover.style.backgroundImage = `url('${url}')`;
-                        bookCover.style.backgroundColor = `hsl(${fallbackHue}, 45%, 15%)`; // Dark tint behind image
-                        coverText.style.display = 'none'; // Hide the text since we have an image
+                        bookCover.style.backgroundColor = `hsl(${fallbackHue}, 45%, 15%)`; 
+                        coverText.style.display = 'none'; 
                         console.log(`Cover applied for ${bookData.Titulo}`);
                     }
                 };
             });
         }
 
-        function startSelection() {
-            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-            
-            drawBtn.disabled = true;
-            bookObj.classList.remove('open', 'visible');
-            statusText.innerText = "Searching the collection...";
-            loadingIndicator.style.display = "block";
+        // --- BUTTON LOGIC MANAGER ---
+        function handleMainAction() {
+            if (appState === 'IDLE' || appState === 'OPENED') {
+                startSelection();
+            } else if (appState === 'WAITING_TO_OPEN') {
+                triggerBookOpen();
+            }
+        }
 
-            // SECRETLY CHOOSE THE WINNER IMMEDIATELY
+        function startSelection() {
+            appState = 'SPINNING';
+            mainBtn.disabled = true;
+            mainBtn.innerText = "Searching...";
+            mainBtn.classList.remove('btn-action');
+            bookObj.classList.remove('open', 'visible');
+            statusText.innerText = "Dusting off the shelves...";
+
+            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+
+            // Choose winner and start loading the cover immediately
             const randomIndex = Math.floor(Math.random() * totalBooks);
             chosenBook = booksData[randomIndex];
             
             const seedString = chosenBook.Saga.trim() !== "" ? chosenBook.Saga : chosenBook.Autor;
-            const hue = stringToHue(seedString);
+            currentHue = stringToHue(seedString);
+            loadAndApplyCover(chosenBook, currentHue);
 
-            // START FETCHING AND LOADING THE COVER IN THE BACKGROUND
-            loadAndApplyCover(chosenBook, hue);
+            // Populate Text Fields
+            tituloDisplay.innerText = chosenBook.Titulo;
+            autorDisplay.innerText = chosenBook.Autor;
+            if (chosenBook.Saga.trim() !== "") {
+                sagaDisplay.innerText = chosenBook.Saga;
+                ordenDisplay.innerText = "Libro " + chosenBook.Orden;
+                sagaDisplay.style.color = `hsl(${currentHue}, 45%, 35%)`; 
+                sagaDisplay.style.display = 'block';
+                ordenDisplay.style.display = 'block';
+                noSagaMsg.style.display = 'none';
+            } else {
+                sagaDisplay.style.display = 'none'; ordenDisplay.style.display = 'none'; noSagaMsg.style.display = 'block';
+            }
 
             // Start Roulette Visuals
             let count = 0;
@@ -306,58 +326,50 @@
                 if (count > 35) {
                     clearInterval(interval);
                     shelfBooks[lastIdx].classList.remove('highlight');
-                    finalizeSelection(hue);
+                    presentClosedBook();
                 }
             }, 70);
         }
 
-        function finalizeSelection(hue) {
-            loadingIndicator.style.display = "none";
+        function presentClosedBook() {
+            appState = 'WAITING_TO_OPEN';
             
-            // Standardize book size
-            bookObj.style.height = '360px'; 
-            bookObj.style.width = '240px';
-            
-            // Populate Text Fields Inside the Book
-            tituloDisplay.innerText = chosenBook.Titulo;
-            autorDisplay.innerText = chosenBook.Autor;
-
-            if (chosenBook.Saga.trim() !== "") {
-                sagaDisplay.innerText = chosenBook.Saga;
-                ordenDisplay.innerText = "Book " + chosenBook.Orden;
-                sagaDisplay.style.color = `hsl(${hue}, 45%, 35%)`; 
-                sagaDisplay.style.display = 'block';
-                ordenDisplay.style.display = 'block';
-                noSagaMsg.style.display = 'none';
-            } else {
-                sagaDisplay.style.display = 'none';
-                ordenDisplay.style.display = 'none';
-                noSagaMsg.style.display = 'block';
-            }
-            
-            // Select and Play Theme Music based on the Hue
-            if (hue < 120) currentAudio = document.getElementById('audio-warm');
-            else if (hue < 240) currentAudio = document.getElementById('audio-cool');
+            // Start the music to build tension
+            if (currentHue < 120) currentAudio = document.getElementById('audio-warm');
+            else if (currentHue < 240) currentAudio = document.getElementById('audio-cool');
             else currentAudio = document.getElementById('audio-bright');
             currentAudio.play();
 
-            // Display the Book!
+            // Display Book
+            bookObj.style.height = '360px'; 
+            bookObj.style.width = '240px';
             bookObj.classList.add('visible');
-            statusText.innerText = "Your next adventure!";
+            statusText.innerText = "A book has been chosen!";
 
+            // Update Button
+            mainBtn.disabled = false;
+            mainBtn.innerText = "Open Book";
+            mainBtn.classList.add('btn-action'); // Makes the button look special
+        }
+
+        function triggerBookOpen() {
+            appState = 'OPENED';
+            mainBtn.disabled = true;
+            mainBtn.classList.remove('btn-action');
+            
+            bookObj.classList.add('open');
+            statusText.innerText = `${chosenBook.Titulo}`;
+            
+            // Pop Confetti matching the Saga's Color!
+            confetti({
+                particleCount: 150, spread: 70, origin: { y: 0.7 }, colors: [`hsl(${currentHue}, 45%, 35%)`, '#fff', '#e0d9cf']
+            });
+
+            // Wait before allowing another draw
             setTimeout(() => {
-                bookObj.classList.add('open');
-                statusText.innerText = `${chosenBook.Titulo}`;
-                
-                confetti({
-                    particleCount: 150, spread: 70, origin: { y: 0.7 }, colors: [`hsl(${hue}, 45%, 35%)`, '#fff']
-                });
-
-                setTimeout(() => {
-                    drawBtn.disabled = false;
-                    drawBtn.innerText = "Draw Another";
-                }, 2500);
-            }, 1200);
+                mainBtn.disabled = false;
+                mainBtn.innerText = "Draw Another";
+            }, 2000);
         }
     </script>
 </body>
