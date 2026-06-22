@@ -117,7 +117,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 30px;
             box-sizing: border-box;
         }
 
@@ -140,22 +139,34 @@
         .book.open .cover { transform: rotateY(-180deg); }
         .book.open .page-left { transform: rotateY(-180deg); }
 
-        /* Interior Details */
-        .number-display {
-            font-size: 7rem;
-            color: var(--ink);
+        /* Interior Details & Text Formatting */
+        .book-content {
             opacity: 0;
             transition: opacity 0.5s 1.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
         }
-        .book.open .number-display { opacity: 1; }
+        
+        .book.open .book-content { opacity: 1; }
 
-        .fake-text {
-            width: 80%;
-            height: 3px;
-            background: #e0d9cf;
-            margin: 8px 0;
-            border-radius: 2px;
-        }
+        /* Fix mirroring on the left page when it rotates */
+        .left-content { transform: rotateY(180deg); }
+
+        /* Typography for Book Details */
+        .titulo-text { font-size: 1.6rem; color: var(--ink); margin-bottom: 10px; line-height: 1.2; }
+        .autor-text { font-size: 1rem; color: #555; font-style: italic; }
+        .saga-text { font-family: 'Dancing Script', cursive; font-size: 1.8rem; color: #8d6e63; margin-bottom: 5px; }
+        .orden-text { font-size: 1.1rem; color: var(--ink); }
+        .divider { width: 50px; height: 2px; background: #cbbca8; margin: 15px auto; }
+        
+        .placeholder-text { color: #a09586; font-style: italic; font-size: 0.9rem; }
 
         button {
             margin-top: 20px;
@@ -190,19 +201,23 @@
         
         <div class="stage">
             <div class="book" id="book">
-                <!-- Page Right -->
+                <!-- Page Right (Title & Author) -->
                 <div class="leaf page-right">
-                    <div class="number-display" id="number-display">0</div>
+                    <div class="book-content">
+                        <div class="titulo-text" id="titulo-display"></div>
+                        <div class="divider"></div>
+                        <div class="autor-text" id="autor-display"></div>
+                    </div>
                 </div>
 
-                <!-- Page Left -->
+                <!-- Page Left (Saga & Order) -->
                 <div class="leaf page-left">
-                    <div class="fake-text"></div>
-                    <div class="fake-text" style="width: 60%"></div>
-                    <div class="fake-text"></div>
-                    <div class="fake-text"></div>
-                    <div class="fake-text" style="width: 40%"></div>
-                    <div style="margin-top: 40px; font-style: italic; color: #a09586;">Chapter One</div>
+                    <!-- Left content is wrapped here to flip it upright after the page turns -->
+                    <div class="book-content left-content">
+                        <div class="saga-text" id="saga-display"></div>
+                        <div class="orden-text" id="orden-display"></div>
+                        <div id="no-saga-msg" class="placeholder-text" style="display: none;">Standalone Adventure</div>
+                    </div>
                 </div>
 
                 <!-- Cover -->
@@ -219,31 +234,42 @@
     <audio id="audio-bright" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
 
     <script>
-        const totalBooks = 234;
+        // -------------------------------------------------------------
+        // Replace this array with the data from her Google Sheets!
+        // -------------------------------------------------------------
+        const booksData = [
+            { Titulo: "A Court of Thorns and Roses", Autor: "Sarah J. Maas", Saga: "ACOTAR", Orden: "1" },
+            { Titulo: "A Court of Mist and Fury", Autor: "Sarah J. Maas", Saga: "ACOTAR", Orden: "2" },
+            { Titulo: "Mistborn: The Final Empire", Autor: "Brandon Sanderson", Saga: "Mistborn", Orden: "1" },
+            { Titulo: "The Well of Ascension", Autor: "Brandon Sanderson", Saga: "Mistborn", Orden: "2" },
+            { Titulo: "The Hobbit", Autor: "J.R.R. Tolkien", Saga: "", Orden: "" },
+            { Titulo: "Pride and Prejudice", Autor: "Jane Austen", Saga: "", Orden: "" },
+            { Titulo: "Dune", Autor: "Frank Herbert", Saga: "Dune Chronicles", Orden: "1" }
+        ];
+
+        const totalBooks = booksData.length;
         const library = document.getElementById('library');
         const bookObj = document.getElementById('book');
         const bookCover = document.getElementById('cover');
-        const numberDisplay = document.getElementById('number-display');
         const statusText = document.getElementById('status');
         const drawBtn = document.getElementById('draw-btn');
+
+        // Text Displays
+        const tituloDisplay = document.getElementById('titulo-display');
+        const autorDisplay = document.getElementById('autor-display');
+        const sagaDisplay = document.getElementById('saga-display');
+        const ordenDisplay = document.getElementById('orden-display');
+        const noSagaMsg = document.getElementById('no-saga-msg');
         
-        // --- AUDIO FIX HERE ---
         let audioCtx;
 
         function playPop(pitch) {
-            // Create the audio context ONLY after the user clicks the button
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
 
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
-            
-            // Scheduling slightly in the future (0.01s) guarantees it plays smoothly
             const now = audioCtx.currentTime + 0.01;
             
             osc.frequency.setValueAtTime(150 + (pitch * 1.5), now);
@@ -257,9 +283,21 @@
             osc.stop(now + 0.1);
         }
 
-        // Generate Library Background
+        // Helper: Convert string (like Saga name) to a consistent color Hue (0-360)
+        function stringToHue(str) {
+            if (!str) return Math.floor(Math.random() * 360);
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return Math.abs(hash) % 360;
+        }
+
+        // Generate Library Background (Using visual dots for all books)
+        // If there are few books, we multiply them visually for the background aesthetic
+        const visualBooksCount = Math.max(totalBooks, 150); 
         const shelfBooks = [];
-        for (let i = 0; i < totalBooks; i++) {
+        for (let i = 0; i < visualBooksCount; i++) {
             const b = document.createElement('div');
             b.className = 'shelf-book';
             b.style.backgroundColor = `hsl(${Math.random() * 360}, 25%, 25%)`;
@@ -281,10 +319,9 @@
 
             const interval = setInterval(() => {
                 if (lastIdx > -1) shelfBooks[lastIdx].classList.remove('highlight');
-                lastIdx = Math.floor(Math.random() * totalBooks);
+                lastIdx = Math.floor(Math.random() * shelfBooks.length);
                 shelfBooks[lastIdx].classList.add('highlight');
                 
-                // Play roulette ping!
                 playPop(lastIdx);
                 
                 count++;
@@ -297,15 +334,37 @@
         }
 
         function finalizeSelection() {
-            const result = Math.floor(Math.random() * totalBooks) + 1;
-            const hue = Math.floor(Math.random() * 360);
+            // Pick a random book from your actual data
+            const randomIndex = Math.floor(Math.random() * totalBooks);
+            const chosenBook = booksData[randomIndex];
+
+            // Determine Color based on Saga (or Author if standalone). 
+            // This groups series books into the exact same color & music!
+            const seedString = chosenBook.Saga.trim() !== "" ? chosenBook.Saga : chosenBook.Autor;
+            const hue = stringToHue(seedString);
             
-            // Randomize Color & Size slightly
             const h = Math.floor(Math.random() * 40) + 320;
             const w = Math.floor(Math.random() * 30) + 220;
             bookObj.style.height = h + 'px';
             bookObj.style.width = w + 'px';
             bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
+            
+            // Populate the text fields
+            tituloDisplay.innerText = chosenBook.Titulo;
+            autorDisplay.innerText = chosenBook.Autor;
+
+            if (chosenBook.Saga.trim() !== "") {
+                sagaDisplay.innerText = chosenBook.Saga;
+                ordenDisplay.innerText = "Book " + chosenBook.Orden;
+                sagaDisplay.style.color = `hsl(${hue}, 45%, 35%)`; // match saga text to cover
+                sagaDisplay.style.display = 'block';
+                ordenDisplay.style.display = 'block';
+                noSagaMsg.style.display = 'none';
+            } else {
+                sagaDisplay.style.display = 'none';
+                ordenDisplay.style.display = 'none';
+                noSagaMsg.style.display = 'block';
+            }
             
             // Select and Play Theme Music
             if (hue < 120) currentAudio = document.getElementById('audio-warm');
@@ -313,13 +372,12 @@
             else currentAudio = document.getElementById('audio-bright');
             currentAudio.play();
 
-            numberDisplay.innerText = result;
             bookObj.classList.add('visible');
             statusText.innerText = "A choice has been made!";
 
             setTimeout(() => {
                 bookObj.classList.add('open');
-                statusText.innerText = `You are reading Book #${result}`;
+                statusText.innerText = `You are reading ${chosenBook.Titulo}`;
                 
                 confetti({
                     particleCount: 150,
