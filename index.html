@@ -11,47 +11,38 @@
             --paper: #fff9f0;
             --ink: #2c1e1a;
             --book-w: 240px; 
-            --book-h: 360px; /* Slightly taller for standard book aspect ratio */
+            --book-h: 360px; 
         }
 
         body {
-            background-color: #120d0c;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            background-color: #120d0c; margin: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; height: 100vh; overflow: hidden;
             font-family: 'Playfair Display', serif;
         }
 
         .library-container {
-            position: absolute; width: 100%; height: 100%;
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            position: absolute; width: 100%; height: 100%; display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
             grid-auto-rows: 100px; gap: 8px; padding: 20px; opacity: 0.15; z-index: 1;
         }
 
         .shelf-book { width: 100%; height: 100%; border-radius: 3px; transition: 0.1s; }
-
         .ui-layer { position: relative; z-index: 10; text-align: center; width: 100%; }
-
         h1 { color: #d7ccc8; font-size: 2.2rem; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 
         .stage { perspective: 2000px; width: 600px; height: 420px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 
         .book {
             width: var(--book-w); height: var(--book-h); position: relative;
-            transform-style: preserve-3d; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            visibility: hidden;
+            transform-style: preserve-3d; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1); visibility: hidden;
         }
 
         .book.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
-        .book.open { transform: translateX(120px) rotateY(0deg); } /* Shifts right when open to stay centered */
+        .book.open { transform: translateX(120px) rotateY(0deg); } 
 
         .leaf {
             position: absolute; width: 100%; height: 100%; top: 0; left: 0;
-            transform-origin: left; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), background-image 0.5s ease-in;
             backface-visibility: hidden; box-shadow: 5px 5px 20px rgba(0,0,0,0.4); border-radius: 2px 10px 10px 2px;
         }
 
@@ -67,12 +58,13 @@
         }
 
         .cover {
-            background: #8d6e63; z-index: 4; display: flex; align-items: center; justify-content: center;
+            background-color: #8d6e63; z-index: 4; display: flex; align-items: center; justify-content: center;
             text-align: center; color: white; padding: 20px; font-family: 'Dancing Script', cursive; font-size: 1.5rem;
-            border-left: 5px solid rgba(0,0,0,0.4);
-            /* Setup for fetched cover images */
-            background-size: cover; background-position: center;
-            box-shadow: inset 5px 0 15px rgba(0,0,0,0.3); /* Adds a 3D book spine shadow over the image */
+            border-left: 5px solid rgba(0,0,0,0.4); box-shadow: inset 5px 0 15px rgba(0,0,0,0.3);
+            
+            /* Background image sizing */
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            overflow: hidden; word-wrap: break-word;
         }
 
         .book.open .cover { transform: rotateY(-180deg); }
@@ -84,7 +76,7 @@
         }
         
         .book.open .book-content { opacity: 1; }
-        .left-content { transform: rotateY(180deg); } /* Un-mirrors text on the left page */
+        .left-content { transform: rotateY(180deg); } 
 
         .titulo-text { font-size: 1.6rem; color: var(--ink); margin-bottom: 10px; line-height: 1.2; }
         .autor-text { font-size: 1rem; color: #555; font-style: italic; }
@@ -107,7 +99,6 @@
         }
 
         .highlight { background: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.4); z-index: 5; }
-        
         .loading-text { font-size: 1rem; opacity: 0.7; margin-top: 10px; font-style: italic; display: none;}
     </style>
 </head>
@@ -136,256 +127,27 @@
                     </div>
                 </div>
 
-                <!-- We wrap the cover text in a span so we can hide it when an image loads -->
                 <div class="leaf cover" id="cover"><span id="cover-text">Your next adventure awaits...</span></div>
             </div>
         </div>
 
         <button id="draw-btn" onclick="startSelection()">Draw a Book</button>
-        <div id="loading-indicator" class="loading-text">Dusting off the cover...</div>
+        <div id="loading-indicator" class="loading-text">Summoning the tomes...</div>
     </div>
 
+    <!-- Music -->
     <audio id="audio-warm" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
     <audio id="audio-cool" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
     <audio id="audio-bright" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
 
     <script>
         const booksData = [
-            { Titulo: "Todo es eventual", Autor: "Stephen King ", Saga: "", Orden: "" },
-            { Titulo: "Carrie", Autor: "Stephen King ", Saga: "", Orden: "" },
-            { Titulo: "El misterio de Salem Lot", Autor: "Stephen King ", Saga: "", Orden: "" },
-            { Titulo: "It", Autor: "Stephen King ", Saga: "", Orden: "" },
-            { Titulo: "Ojos de Fuego ", Autor: "Stephen King ", Saga: "", Orden: "" },
-            { Titulo: "Un saco de huesos", Autor: "Stephen King ", Saga: "", Orden: "" },
-            { Titulo: "Sangre en la nieve", Autor: "Jo Nesbo", Saga: "", Orden: "" },
-            { Titulo: "El evangelio del Mal ", Autor: "Patrick Graham", Saga: "", Orden: "" },
-            { Titulo: "El silencio de los malditos", Autor: "Carlos Pinto", Saga: "", Orden: "" },
-            { Titulo: "El jardin de los inocentes", Autor: "Carlos Pinto", Saga: "", Orden: "" },
-            { Titulo: "El encanto del cuervo", Autor: "Maria Martinez", Saga: "", Orden: "" },
-            { Titulo: "La casa infernal", Autor: "Richard Matheson", Saga: "", Orden: "" },
-            { Titulo: "El caso hartung", Autor: "Soren Sveistrup", Saga: "", Orden: "" },
-            { Titulo: "Medianoche ", Autor: "Claudio Grey", Saga: "Medianoche ", Orden: "1" },
-            { Titulo: "Adiccion ", Autor: "Claudio Grey", Saga: "Medianoche ", Orden: "2" },
-            { Titulo: "Despedida", Autor: "Claudio Grey", Saga: "Medianoche ", Orden: "3" },
-            { Titulo: "Renacer", Autor: "Claudio Grey", Saga: "Medianoche ", Orden: "4" },
-            { Titulo: "Balthazar", Autor: "Claudio Grey", Saga: "Medianoche ", Orden: "5" },
-            { Titulo: "La otra gente", Autor: "C.J. Tudor", Saga: "", Orden: "" },
-            { Titulo: "Las chicas de chapel croft", Autor: "C.J. Tudor", Saga: "", Orden: "" },
-            { Titulo: "El visitante", Autor: "Stephen King", Saga: "", Orden: "" },
-            { Titulo: "Cuento de hadas", Autor: "Stephen King", Saga: "", Orden: "" },
-            { Titulo: "La sangre manda", Autor: "Stephen King", Saga: "", Orden: "" },
-            { Titulo: "Ragdoll", Autor: "Daniel Cole", Saga: "", Orden: "" },
-            { Titulo: "Condenados", Autor: "Glenn Cooper", Saga: "Condenados", Orden: "1" },
-            { Titulo: "La puerta de las tinieblas", Autor: "Glenn Cooper", Saga: "Condenados", Orden: "2" },
-            { Titulo: "La invasion de las tinieblas", Autor: "Glenn Cooper", Saga: "Condenados", Orden: "3" },
-            { Titulo: "El juego de las mentiras", Autor: "Ruth Ware", Saga: "", Orden: "" },
-            { Titulo: "Fahrenheit", Autor: "Ray Bradbury", Saga: "", Orden: "" },
-            { Titulo: "Una princesa de marte", Autor: "Edgar Rice Burroughs", Saga: "", Orden: "" },
-            { Titulo: "Intuicion ", Autor: "Elizabeth Noreback", Saga: "", Orden: "" },
-            { Titulo: "El psicoanalista", Autor: "John Katzenbach", Saga: "El psicoanalista ", Orden: "1" },
-            { Titulo: "Jaque al psicoanalista", Autor: "John Katzenbach", Saga: "", Orden: "2" },
-            { Titulo: "El envio ", Autor: "Sebastian Fitzek", Saga: "", Orden: "" },
-            { Titulo: "Dagón y otros relatos", Autor: "H.P Lovecraft", Saga: "Coleccion H.P Lovecraft", Orden: "1" },
-            { Titulo: "El color que cayo del cielo", Autor: "H.P Lovecraft", Saga: "Coleccion H.P Lovecraft", Orden: "2" },
-            { Titulo: "El necronomicon", Autor: "H.P Lovecraft", Saga: "Coleccion H.P Lovecraft", Orden: "3" },
-            { Titulo: "La llamada del Cthulhu", Autor: "H.P Lovecraft", Saga: "Coleccion H.P Lovecraft", Orden: "4" },
-            { Titulo: "Maravilloso desastre", Autor: "Jaime McGuire", Saga: "Maravillos Desastre", Orden: "1" },
-            { Titulo: "Inevitable desastre", Autor: "Jaime McGuire", Saga: "Maravillos Desastre", Orden: "2" },
-            { Titulo: "Te esperare", Autor: "Jennifer L. Armentrout", Saga: "", Orden: "" },
-            { Titulo: "Muerte de una sirena ", Autor: "Thomas Rydahl", Saga: "", Orden: "" },
-            { Titulo: "Gotico", Autor: "Silvia Moreno-Garcia", Saga: "", Orden: "" },
-            { Titulo: "El año de las brujas", Autor: "Alexis Henderson", Saga: "", Orden: "" },
-            { Titulo: "Grupo de apoyo para final girls", Autor: "Grady Hendrix", Saga: "", Orden: "" },
-            { Titulo: "Laguna Negra", Autor: "Lucia Ramirez", Saga: "", Orden: "" },
-            { Titulo: "Labyrinth Lost", Autor: "Zoraida Cordova", Saga: "Brujas de Brookyn ", Orden: "1" },
-            { Titulo: "Brujas born ", Autor: "Zoraida Cordova", Saga: "Brujas de Brookyn ", Orden: "2" },
-            { Titulo: "Wayward witch", Autor: "Zoraida Cordova", Saga: "Brujas de Brookyn ", Orden: "3" },
-            { Titulo: "La princesa Roja", Autor: "Amelie Wen Zhao", Saga: "", Orden: "" },
-            { Titulo: "Only a moster", Autor: "Vanessa Len ", Saga: "", Orden: "" },
-            { Titulo: "Marfil ", Autor: "Mercedes Ron", Saga: "Enfrentados", Orden: "1" },
-            { Titulo: "Ebano", Autor: "Mercedes Ron", Saga: "Enfrentados", Orden: "2" },
-            { Titulo: "Las chicas perfectas ", Autor: "Sara Shepard", Saga: "Perfectas", Orden: "1" },
-            { Titulo: "Las chicas buenas ", Autor: "Sara Shepard", Saga: "Perfectas", Orden: "2" },
-            { Titulo: "Un cielo tras otro", Autor: "Francesc Miralles", Saga: "Oblivion", Orden: "1" },
-            { Titulo: "Tormenta de estrellas", Autor: "Francesc Miralles", Saga: "Oblivion", Orden: "2" },
-            { Titulo: "La vida secreta de la luna ", Autor: "Francesc Miralles", Saga: "Oblivion", Orden: "3" },
-            { Titulo: "Stranger", Autor: "Alex Mirez", Saga: "", Orden: "" },
-            { Titulo: "La revelacion ", Autor: "Ariana Godoy", Saga: "Almas perdidas", Orden: "1" },
-            { Titulo: "El nuevo mundo", Autor: "Ariana Godoy", Saga: "", Orden: "2" },
-            { Titulo: "Las Mil y una noches", Autor: "Anonimo", Saga: "Tomo 1", Orden: "1" },
-            { Titulo: "Las mil y una noche ", Autor: "Anonimo", Saga: "Tomo 2", Orden: "2" },
-            { Titulo: "Cuentos completos ", Autor: "Edgar Allan Poe", Saga: "", Orden: "" },
-            { Titulo: "Asesinato en el expreso oriente", Autor: "Agatha Christie", Saga: "", Orden: "" },
-            { Titulo: "Muerte en el nilo ", Autor: "Agatha Christie", Saga: "", Orden: "" },
-            { Titulo: "Cianuro espumoso", Autor: "Agatha Christie", Saga: "", Orden: "" },
-            { Titulo: "Dracula ", Autor: "Bram Stoker", Saga: "", Orden: "" },
-            { Titulo: "Frankestein", Autor: "Mary Shelley", Saga: "", Orden: "" },
-            { Titulo: "Antologia de Relatos de Terror", Autor: "Varios", Saga: "", Orden: "" },
-            { Titulo: "El retrato de Doria Gray", Autor: "Oscar Wilde", Saga: "", Orden: "" },
-            { Titulo: "Alicia en el pais de las maravillas", Autor: "Lewis Carroll", Saga: "Alicia", Orden: "1" },
-            { Titulo: "Alicia a travez del espejo", Autor: "Lewis Carroll", Saga: "Alicia", Orden: "2" },
-            { Titulo: "Cuento de los hermanos Grimm", Autor: "Hermanos Grimm", Saga: "", Orden: "" },
-            { Titulo: "Cuentos de Hadas", Autor: "Charles Perrault", Saga: "", Orden: "" },
-            { Titulo: "Peter Pan ", Autor: "J. M Barrie", Saga: "", Orden: "" },
-            { Titulo: "La Abadia de Northanger", Autor: "Jane Austen", Saga: "", Orden: "" },
-            { Titulo: "Orgullo y Prejuicio", Autor: "Jane Austen", Saga: "", Orden: "" },
-            { Titulo: "Hush hush ", Autor: "Becca Fitzpatrick", Saga: "Hush hush", Orden: "1" },
-            { Titulo: "Crescendo", Autor: "Becca Fitzpatrick", Saga: "Hush hush", Orden: "2" },
-            { Titulo: "Silencio", Autor: "Becca Fitzpatrick", Saga: "Hush hush", Orden: "3" },
-            { Titulo: "Obsidian ", Autor: "Jennifer L. Armentrout", Saga: "Lux", Orden: "1" },
-            { Titulo: "Onix", Autor: "Jennifer L. Armentrout", Saga: "Lux", Orden: "2" },
-            { Titulo: "Opal", Autor: "Jennifer L. Armentrout", Saga: "Lux", Orden: "3" },
-            { Titulo: "Origen", Autor: "Jennifer L. Armentrout", Saga: "Lux", Orden: "4" },
-            { Titulo: "Opposition", Autor: "Jennifer L. Armentrout", Saga: "Lux", Orden: "5" },
-            { Titulo: "El beso de la realeza", Autor: "Lyndsey Duga", Saga: "", Orden: "" },
-            { Titulo: "El beso del infierno", Autor: "Jennifer L. Armentrout", Saga: "Los elementos oscuros", Orden: "1" },
-            { Titulo: "La caricia del infierno", Autor: "Jennifer L. Armentrout", Saga: "", Orden: "2" },
-            { Titulo: "El suspiro del infierno", Autor: "Jennifer L. Armentrout", Saga: "", Orden: "3" },
-            { Titulo: "Destino ", Autor: "Maria Martinez", Saga: "Almas Oscuras", Orden: "1" },
-            { Titulo: "Presagio", Autor: "Maria Martinez", Saga: "Almas Oscuras", Orden: "2" },
-            { Titulo: "Sacrificio", Autor: "Maria Martinez", Saga: "Almas Oscuras", Orden: "3" },
-            { Titulo: "El dia que dejo de nevar en alaska", Autor: "Alice Keller", Saga: "", Orden: "" },
-            { Titulo: "La ecuación del amor ", Autor: "Helen Hoans", Saga: "", Orden: "" },
-            { Titulo: "Mago de papel", Autor: "Charlie N. Holmberg", Saga: "Mago de papel", Orden: "1" },
-            { Titulo: "Mago de cristal", Autor: "Charlie N. Holmberg", Saga: "Mago de papel", Orden: "2" },
-            { Titulo: "Mago supremo", Autor: "Charlie N. Holmberg", Saga: "Mago de papel", Orden: "3" },
-            { Titulo: "Kalte", Autor: "Lili Cross", Saga: "", Orden: "" },
-            { Titulo: "El principe cruel", Autor: "Holly Black", Saga: "Los habitantes del aire", Orden: "1" },
-            { Titulo: "El rey malvado", Autor: "Holly Black", Saga: "Los habitantes del aire", Orden: "2" },
-            { Titulo: "La reina de la nada", Autor: "Holly Black", Saga: "Los habitantes del aire", Orden: "3" },
-            { Titulo: "El retorno", Autor: "Jennifer L. Armentrout", Saga: "Titán", Orden: "1" },
-            { Titulo: "El poder", Autor: "Jennifer L. Armentrout", Saga: "Titán", Orden: "2" },
-            { Titulo: "La lucha", Autor: "Jennifer L. Armentrout", Saga: "Titán", Orden: "3" },
-            { Titulo: "La profecia", Autor: "Jennifer L. Armentrout", Saga: "Titán", Orden: "4" },
-            { Titulo: "Una corte de rosas y espinas", Autor: "Sarah. J Maas", Saga: "Acotar", Orden: "1" },
-            { Titulo: "Una corte de nieblas y furia", Autor: "Sarah. J Maas", Saga: "Acotar", Orden: "2" },
-            { Titulo: "Una corte de alas y ruina ", Autor: "Sarah. J Maas", Saga: "Acotar", Orden: "3" },
-            { Titulo: "Una corte de llamas plateadas", Autor: "Sarah. J Maas", Saga: "Acotar", Orden: "5" },
-            { Titulo: "Cuidades de humo", Autor: "Joana Marcus", Saga: "Fuego", Orden: "1" },
-            { Titulo: "Cuidades de cenizas", Autor: "Joana Marcus", Saga: "Fuego", Orden: "2" },
-            { Titulo: "Cuidades de fuego", Autor: "Joana Marcus", Saga: "Fuego", Orden: "3" },
-            { Titulo: "El rey de la mascara oscura", Autor: "Javiera Valenzuela", Saga: "", Orden: "" },
-            { Titulo: "Una violeta hecha de espinas", Autor: "Gina Chen", Saga: "", Orden: "" },
-            { Titulo: "Dos Razas", Autor: "Carolina Veneros", Saga: "Pacto", Orden: "1" },
-            { Titulo: "Heredera Dorada", Autor: "G.A. Zanetti", Saga: "Atanea ", Orden: "1" },
-            { Titulo: "Princesa de Sangre", Autor: "G.A. Zanetti", Saga: "Atanea ", Orden: "2" },
-            { Titulo: "Gato blanco ", Autor: "Holly Black", Saga: "Obradores de maleficios", Orden: "1" },
-            { Titulo: "Guante rojo", Autor: "Holly Black", Saga: "Obradores de maleficios", Orden: "2" },
-            { Titulo: "Corazon negro", Autor: "Holly Black", Saga: "Obradores de maleficios", Orden: "3" },
-            { Titulo: "Una educación mortal", Autor: "Naomi Novik", Saga: "Escolomancia", Orden: "1" },
-            { Titulo: "El dragon de su majestad", Autor: "Naomi Novik", Saga: "Temerario", Orden: "1" },
-            { Titulo: "Ariadna", Autor: "Jennifer Saint", Saga: "", Orden: "" },
-            { Titulo: "La vida invisible de Addie Larue", Autor: "V.E. Schward", Saga: "", Orden: "" },
-            { Titulo: "Gallant", Autor: "V.E. Schward", Saga: "", Orden: "" },
-            { Titulo: "Corazones retorcidos", Autor: "Melissa Aldert", Saga: "", Orden: "" },
-            { Titulo: "Una leccion de tinta y venganza", Autor: "Victoria Lee", Saga: "", Orden: "" },
-            { Titulo: "Un trato con el rey de los elfos", Autor: "Elise Kova", Saga: "", Orden: "" },
-            { Titulo: "Los señores de la muerte", Autor: "Olivie Blake", Saga: "", Orden: "" },
-            { Titulo: "La casa del Hambre", Autor: "Alexis Henderson", Saga: "", Orden: "" },
-            { Titulo: "Casa de tierra y sangre", Autor: "Sarah. J Maas", Saga: "Cuidad de Medianoche", Orden: "1" },
-            { Titulo: "Casa de cielo y aliento", Autor: "Sarah. J Maas", Saga: "Cuidad de Medianoche", Orden: "2" },
-            { Titulo: "Casa de llama y sombra", Autor: "Sarah. J Maas", Saga: "Cuidad de Medianoche", Orden: "3" },
-            { Titulo: "Hija de humo y hueso", Autor: "Laini Taylor", Saga: "Hija de humo y hueso", Orden: "1" },
-            { Titulo: "Dias de sangre y resplandor", Autor: "Laini Taylor", Saga: "Hija de humo y hueso", Orden: "2" },
-            { Titulo: "Sueño de dioses y mosntruos", Autor: "Laini Taylor", Saga: "Hija de humo y hueso", Orden: "3" },
-            { Titulo: "Inmortal dark ", Autor: "Tigest Girma ", Saga: "", Orden: "" },
-            { Titulo: "La reina roja ", Autor: "Victoria Aveyard", Saga: "Reina Roja", Orden: "1" },
-            { Titulo: "La espada de cristal", Autor: "Victoria Aveyard", Saga: "Reina Roja", Orden: "2" },
-            { Titulo: "La jaula del rey", Autor: "Victoria Aveyard", Saga: "Reina Roja", Orden: "3" },
-            { Titulo: "Tormenta de guerra", Autor: "Victoria Aveyard", Saga: "Reina Roja", Orden: "4" },
-            { Titulo: "Matar un reino", Autor: "Alezandra Christo", Saga: "", Orden: "" },
-            { Titulo: "Invierno asesino", Autor: "Kate Boorman", Saga: "", Orden: "" },
-            { Titulo: "El libro de hechizos de los perdido y lo encontrado", Autor: "Moira Fowley-Doyle", Saga: "", Orden: "" },
-            { Titulo: "Cinder y el principe de medianoche", Autor: "Susan Ee", Saga: "", Orden: "" },
-            { Titulo: "Angeles caidos", Autor: "Susan Ee", Saga: "Fin de los tiempos", Orden: "1" },
-            { Titulo: "El mundo del mañana", Autor: "Susan Ee", Saga: "", Orden: "2" },
-            { Titulo: "El fin de los tiempos", Autor: "Susan Ee", Saga: "", Orden: "3" },
-            { Titulo: "Cuentamelo todo", Autor: "Cambria Brockman", Saga: "", Orden: "" },
-            { Titulo: "El odio que das", Autor: "Angie Thomas ", Saga: "", Orden: "" },
-            { Titulo: "Fangirl", Autor: "Raindbow Rowell", Saga: "", Orden: "" },
-            { Titulo: "El secreto", Autor: "Melinda Metz", Saga: "Roswell High", Orden: "1" },
-            { Titulo: "Diabolica", Autor: "S.J Kincaid", Saga: "", Orden: "" },
-            { Titulo: "Los juego de la reina sol ", Autor: "Nisha J. Tuli", Saga: "Ouranos", Orden: "1" },
-            { Titulo: "El misterio de la cuidad en el aire", Autor: "Helen Cepeda", Saga: "", Orden: "" },
-            { Titulo: "La chica numero 11", Autor: "Amy Suiter Clarke", Saga: "", Orden: "" },
-            { Titulo: "Temporada de Huracanes", Autor: "Fernanda Melchor", Saga: "", Orden: "" },
-            { Titulo: "Una vuelta al cielo ", Autor: "Adriana Cloudy", Saga: "", Orden: "" },
-            { Titulo: "El barco de Teseo ", Autor: "J.K Abrams", Saga: "", Orden: "" },
-            { Titulo: "Rompiendo tus reglas ", Autor: "Violeta Boyd", Saga: "Vhaldai", Orden: "1" },
-            { Titulo: "Cambiando tus reglas", Autor: "Violeta Boyd", Saga: "Vhaldai", Orden: "2" },
-            { Titulo: "Obedeciendo tus reglas", Autor: "Violeta Boyd", Saga: "Vhaldai", Orden: "3" },
-            { Titulo: "Love you", Autor: "Estelle Maskame", Saga: "You", Orden: "1" },
-            { Titulo: "Need you ", Autor: "Estelle Maskame", Saga: "You", Orden: "2" },
-            { Titulo: "Miss you", Autor: "Estelle Maskame", Saga: "You", Orden: "3" },
-            { Titulo: "Una magia mas oscura", Autor: "V.E. Schward", Saga: "Sombras de magia", Orden: "1" },
-            { Titulo: "Coincilio de sombas", Autor: "V.E. Schward", Saga: "Sombras de magia", Orden: "2" },
-            { Titulo: "Conjuro de luz ", Autor: "V.E. Schward", Saga: "Sombras de magia", Orden: "3" },
-            { Titulo: "Angel mecanico", Autor: "Cassandra Clare", Saga: "Los Origenes", Orden: "1" },
-            { Titulo: "Principe mecanico", Autor: "Cassandra Clare", Saga: "Los Origenes", Orden: "2" },
-            { Titulo: "Princesa mecanica", Autor: "Cassandra Clare", Saga: "Los Origenes", Orden: "3" },
-            { Titulo: "Ciudad de hueso", Autor: "Cassandra Clare", Saga: "Cazadores de sombras", Orden: "1" },
-            { Titulo: "Ciudad de cenizas", Autor: "Cassandra Clare", Saga: "Cazadores de sombras", Orden: "2" },
-            { Titulo: "Ciudad de cristal", Autor: "Cassandra Clare", Saga: "Cazadores de sombras", Orden: "3" },
-            { Titulo: "Cuidad de angeles caidos", Autor: "Cassandra Clare", Saga: "Cazadores de sombras", Orden: "4" },
-            { Titulo: "Cuidad de almas perdidas ", Autor: "Cassandra Clare", Saga: "Cazadores de sombras", Orden: "5" },
-            { Titulo: "Cuidad de fuego celestial", Autor: "Cassandra Clare", Saga: "Cazadores de sombras", Orden: "6" },
-            { Titulo: "El priorato del naranjo", Autor: "Samantha Shannon", Saga: "", Orden: "" },
-            { Titulo: "Dorothy debe morir", Autor: "Danielle Paige", Saga: "Dorothy debe morir", Orden: "1" },
-            { Titulo: "Los malvados se alzaran", Autor: "Danielle Paige", Saga: "Dorothy debe morir", Orden: "2" },
-            { Titulo: "Camino amarillo en guerra", Autor: "Danielle Paige", Saga: "Dorothy debe morir", Orden: "3" },
-            { Titulo: "El fin de Oz", Autor: "Danielle Paige", Saga: "Dorothy debe morir", Orden: "4" },
-            { Titulo: "Heartless", Autor: "Marissa Meyer", Saga: "", Orden: "" },
-            { Titulo: "Chicas de nieve y cristal", Autor: "Melissa Bashardoust", Saga: "", Orden: "" },
-            { Titulo: "Perdidos en nunca jamas", Autor: "Aiden Thomas ", Saga: "", Orden: "" },
-            { Titulo: "En el bosque", Autor: "Alyssa Wees", Saga: "", Orden: "" },
-            { Titulo: "Cinder", Autor: "Marissa Meyer", Saga: "Cronicas Lunares", Orden: "1" },
-            { Titulo: "Scarlet", Autor: "Marissa Meyer", Saga: "Cronicas Lunares", Orden: "2" },
-            { Titulo: "Stars Above", Autor: "Marissa Meyer", Saga: "Cronicas Lunares", Orden: "2.5" },
-            { Titulo: "Cress", Autor: "Marissa Meyer", Saga: "Cronicas Lunares", Orden: "3" },
-            { Titulo: "Fairest", Autor: "Marissa Meyer", Saga: "Cronicas Lunares", Orden: "3.5" },
-            { Titulo: "Winter", Autor: "Marissa Meyer", Saga: "Cronicas Lunares", Orden: "4" },
-            { Titulo: "Despues del deshielo", Autor: "Adrienne Young", Saga: "", Orden: "" },
-            { Titulo: "La maldicion del mar", Autor: "Shea Ernshaw", Saga: "", Orden: "" },
-            { Titulo: "El vacio", Autor: "Victoria Schawb", Saga: "El archivo", Orden: "2" },
-            { Titulo: "Circe", Autor: "Madeline Miller", Saga: "", Orden: "" },
-            { Titulo: "Loba", Autor: "Veronica Murguia", Saga: "", Orden: "" },
-            { Titulo: "De sangre y cenizas", Autor: "Jennifer L. Armentrout", Saga: "De sangre y cenizas", Orden: "1" },
-            { Titulo: "Un reino de carne y fuego", Autor: "Jennifer L. Armentrout", Saga: "De sangre y cenizas", Orden: "2" },
-            { Titulo: "La bruja blanca", Autor: "Shelby Mahurin", Saga: "Asesino de brujas", Orden: "1" },
-            { Titulo: "Los hijos del rey ", Autor: "Shelby Mahurin", Saga: "Asesino de brujas", Orden: "2" },
-            { Titulo: "Dioses y monstruos", Autor: "Shelby Mahurin", Saga: "Asesino de brujas", Orden: "3" },
-            { Titulo: "Una obsesion perversa", Autor: "V.E. Schward", Saga: "Villanos", Orden: "1" },
-            { Titulo: "Una venganza mortal", Autor: "V.E. Schward", Saga: "Villanos", Orden: "2" },
-            { Titulo: "El reino de los malditos", Autor: "Kerri Maniscalco", Saga: "El reino de los malditos", Orden: "1" },
-            { Titulo: "Los siete circulos del infierno ", Autor: "Kerri Maniscalco", Saga: "El reino de los malditos", Orden: "2" },
-            { Titulo: "El asenso de las temidas", Autor: "Kerri Maniscalco", Saga: "El reino de los malditos", Orden: "3" },
-            { Titulo: "La bruja de near", Autor: "Victoria Schwab", Saga: "", Orden: "" },
-            { Titulo: "La bruja del mar", Autor: "Sarah Henning", Saga: "", Orden: "" },
-            { Titulo: "El barquero de almas", Autor: "Claire Macfall", Saga: "Almas", Orden: "1" },
-            { Titulo: "Los ladrones de almas", Autor: "Claire Macfall", Saga: "Almas", Orden: "2" },
-            { Titulo: "Lore", Autor: "Alexandra Bracken", Saga: "", Orden: "" },
-            { Titulo: "El libro de los secretos vivientes", Autor: "Madeline Roux", Saga: "", Orden: "" },
-            { Titulo: "Hechicero", Autor: "Sebastien de Castell", Saga: "", Orden: "" },
-            { Titulo: "Juego de Ladrones", Autor: "Kayvion Lewis", Saga: "", Orden: "" },
-            { Titulo: "Hija del guardian del fuego", Autor: "angeline Boulley", Saga: "", Orden: "" },
-            { Titulo: "Anhelo", Autor: "Tracy Wolff", Saga: "Crave", Orden: "1" },
-            { Titulo: "Furia", Autor: "Tracy Wolff", Saga: "Crave", Orden: "2" },
-            { Titulo: "Ansia", Autor: "Tracy Wolff", Saga: "Crave", Orden: "3" },
-            { Titulo: "Fulgor", Autor: "Tracy Wolff", Saga: "Crave", Orden: "4" },
-            { Titulo: "Hechizo", Autor: "Tracy Wolff", Saga: "Crave", Orden: "5" },
-            { Titulo: "Extasis", Autor: "Tracy Wolff", Saga: "Crave", Orden: "6" },
-            { Titulo: "Alas de sangre ", Autor: "Rebecca Yarros", Saga: "Empireo", Orden: "1" },
-            { Titulo: "Alas de hierro", Autor: "Rebecca Yarros", Saga: "Empireo", Orden: "2" },
-            { Titulo: "Alas de onix", Autor: "Rebecca Yarros", Saga: "Empireo", Orden: "3" },
-            { Titulo: "Dulce Maldad", Autor: "Jessica Rivas", Saga: "Destinados", Orden: "1" },
-            { Titulo: "Dulce Perdicion", Autor: "Jessica Rivas", Saga: "Destinados", Orden: "2" },
-            { Titulo: "La asesina del rey ", Autor: "Melissa Blair", Saga: "", Orden: "" },
-            { Titulo: "El pecador del Oxford", Autor: "Mar Petryk", Saga: "", Orden: "" },
-            { Titulo: "La promesa de Julia", Autor: "blue Jeans", Saga: "", Orden: "" },
-            { Titulo: "El carnicero y el pajaro", Autor: "Alaina Urquhart", Saga: "", Orden: "" },
-            { Titulo: "Despierta", Autor: "Beth Revis", Saga: "A travez del universo", Orden: "1" },
-            { Titulo: "Tan cerca", Autor: "Beth Revis", Saga: "A travez del universo", Orden: "2" },
-            { Titulo: "Dos soles", Autor: "Beth Revis", Saga: "A travez del universo", Orden: "3" }
+            { Titulo: "A Court of Thorns and Roses", Autor: "Sarah J. Maas", Saga: "ACOTAR", Orden: "1" },
+            { Titulo: "The Final Empire", Autor: "Brandon Sanderson", Saga: "Mistborn", Orden: "1" },
+            { Titulo: "The Hobbit", Autor: "J.R.R. Tolkien", Saga: "", Orden: "" },
+            { Titulo: "Pride and Prejudice", Autor: "Jane Austen", Saga: "", Orden: "" },
+            { Titulo: "Dune", Autor: "Frank Herbert", Saga: "Dune Chronicles", Orden: "1" },
+            { Titulo: "Iron Flame", Autor: "Rebecca Yarros", Saga: "The Empyrean", Orden: "2" }
         ];
 
         const totalBooks = booksData.length;
@@ -405,7 +167,6 @@
         
         let audioCtx;
         let currentAudio = null;
-        let preFetchedCoverUrl = null; 
         let chosenBook = null;
 
         function playPop(pitch) {
@@ -444,39 +205,74 @@
             shelfBooks.push(b);
         }
 
-        // --- ROBUST COVER FETCHING FUNCTION ---
+        // --- THE ROBUST FETCH ENGINE ---
         async function fetchBookCover(title, author) {
             const query = encodeURIComponent(`${title} ${author}`);
             
-            // 1. Try Google Books API (Usually more accurate and higher res)
+            // 1. Google Books (Checking top 3 results, not just the first one)
             try {
-                const gbRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
+                console.log(`Searching Google Books for: ${title}`);
+                const gbRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=3`);
                 const gbData = await gbRes.json();
-                if (gbData.items && gbData.items.length > 0) {
-                    let img = gbData.items[0].volumeInfo?.imageLinks?.thumbnail;
-                    if (img) {
-                        // Force HTTPS to prevent mixed-content security errors
-                        img = img.replace('http:', 'https:');
-                        // Hack to get slightly higher res from Google Books
-                        return img.replace('&edge=curl', '') + '&zoom=1'; 
+                
+                if (gbData.items) {
+                    for (let item of gbData.items) {
+                        if (item.volumeInfo?.imageLinks?.thumbnail) {
+                            let imgUrl = item.volumeInfo.imageLinks.thumbnail;
+                            // Force secure HTTPS link
+                            return imgUrl.replace('http:', 'https:'); 
+                        }
                     }
                 }
-            } catch (e) { console.warn("Google Books API missed:", e); }
+            } catch (e) { console.warn("Google Books API Error:", e); }
 
-            // 2. Try OpenLibrary API as Fallback
+            // 2. OpenLibrary Fallback (Checking top 3 results)
             try {
-                const olRes = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1`);
+                console.log(`Falling back to OpenLibrary for: ${title}`);
+                const olRes = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=3`);
                 const olData = await olRes.json();
-                if (olData.docs && olData.docs.length > 0) {
-                    const coverId = olData.docs[0].cover_i;
-                    if (coverId) {
-                        return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+                
+                if (olData.docs) {
+                    for (let doc of olData.docs) {
+                        if (doc.cover_i) {
+                            return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+                        }
                     }
                 }
-            } catch (e) { console.warn("OpenLibrary API missed:", e); }
+            } catch (e) { console.warn("OpenLibrary API Error:", e); }
 
-            // 3. Fail gracefully
-            return null; 
+            return null; // Both failed, we will use the color fallback
+        }
+
+        // --- APPLY COVER SAFELY IN THE BACKGROUND ---
+        function loadAndApplyCover(bookData, fallbackHue) {
+            // First, immediately set the color fallback just in case
+            bookCover.style.backgroundImage = 'none';
+            bookCover.style.backgroundColor = `hsl(${fallbackHue}, 45%, 35%)`;
+            coverText.style.display = 'block';
+            coverText.innerText = bookData.Titulo;
+
+            fetchBookCover(bookData.Titulo, bookData.Autor).then(url => {
+                if (!url) {
+                    console.log(`No cover found for ${bookData.Titulo}`);
+                    return; 
+                }
+
+                console.log(`Cover found! Downloading from: ${url}`);
+                
+                // Pre-load the image so it doesn't "glitch" onto the book half-loaded
+                const img = new Image();
+                img.src = url;
+                img.onload = () => {
+                    // Only apply if they haven't rapidly clicked "Draw Again"
+                    if (chosenBook === bookData) {
+                        bookCover.style.backgroundImage = `url('${url}')`;
+                        bookCover.style.backgroundColor = `hsl(${fallbackHue}, 45%, 15%)`; // Dark tint behind image
+                        coverText.style.display = 'none'; // Hide the text since we have an image
+                        console.log(`Cover applied for ${bookData.Titulo}`);
+                    }
+                };
+            });
         }
 
         function startSelection() {
@@ -486,21 +282,16 @@
             bookObj.classList.remove('open', 'visible');
             statusText.innerText = "Searching the collection...";
             loadingIndicator.style.display = "block";
-            
-            // Reset cover for a new draw
-            bookCover.style.backgroundImage = 'none';
-            coverText.style.display = 'block';
-            coverText.innerText = "Binding the pages...";
 
             // SECRETLY CHOOSE THE WINNER IMMEDIATELY
             const randomIndex = Math.floor(Math.random() * totalBooks);
             chosenBook = booksData[randomIndex];
+            
+            const seedString = chosenBook.Saga.trim() !== "" ? chosenBook.Saga : chosenBook.Autor;
+            const hue = stringToHue(seedString);
 
-            // START FETCHING COVER IN THE BACKGROUND WHILE ANIMATION PLAYS
-            preFetchedCoverUrl = null; // reset
-            fetchBookCover(chosenBook.Titulo, chosenBook.Autor).then(url => {
-                preFetchedCoverUrl = url;
-            });
+            // START FETCHING AND LOADING THE COVER IN THE BACKGROUND
+            loadAndApplyCover(chosenBook, hue);
 
             // Start Roulette Visuals
             let count = 0;
@@ -515,32 +306,19 @@
                 if (count > 35) {
                     clearInterval(interval);
                     shelfBooks[lastIdx].classList.remove('highlight');
-                    finalizeSelection();
+                    finalizeSelection(hue);
                 }
             }, 70);
         }
 
-        function finalizeSelection() {
+        function finalizeSelection(hue) {
             loadingIndicator.style.display = "none";
-            const seedString = chosenBook.Saga.trim() !== "" ? chosenBook.Saga : chosenBook.Autor;
-            const hue = stringToHue(seedString);
             
-            bookObj.style.height = '360px'; // Standardize size to fit fetched images nicely
+            // Standardize book size
+            bookObj.style.height = '360px'; 
             bookObj.style.width = '240px';
             
-            // APPLY THE FETCHED COVER (Or fallback to color)
-            if (preFetchedCoverUrl) {
-                bookCover.style.backgroundImage = `url('${preFetchedCoverUrl}')`;
-                coverText.style.display = 'none'; // hide the fallback text
-                bookCover.style.backgroundColor = `hsl(${hue}, 45%, 15%)`; // Dark behind image
-            } else {
-                bookCover.style.backgroundImage = 'none';
-                bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
-                coverText.style.display = 'block';
-                coverText.innerText = chosenBook.Titulo;
-            }
-            
-            // Populate Text Fields
+            // Populate Text Fields Inside the Book
             tituloDisplay.innerText = chosenBook.Titulo;
             autorDisplay.innerText = chosenBook.Autor;
 
@@ -557,12 +335,13 @@
                 noSagaMsg.style.display = 'block';
             }
             
-            // Select and Play Theme Music
+            // Select and Play Theme Music based on the Hue
             if (hue < 120) currentAudio = document.getElementById('audio-warm');
             else if (hue < 240) currentAudio = document.getElementById('audio-cool');
             else currentAudio = document.getElementById('audio-bright');
             currentAudio.play();
 
+            // Display the Book!
             bookObj.classList.add('visible');
             statusText.innerText = "Your next adventure!";
 
