@@ -11,7 +11,7 @@
             --paper: #fff9f0;
             --ink: #2c1e1a;
             --book-w: 240px; 
-            --book-h: 340px; 
+            --book-h: 360px; /* Slightly taller for standard book aspect ratio */
         }
 
         body {
@@ -26,160 +26,77 @@
             font-family: 'Playfair Display', serif;
         }
 
-        /* Library Background */
         .library-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-            grid-auto-rows: 100px;
-            gap: 8px;
-            padding: 20px;
-            opacity: 0.15;
-            z-index: 1;
+            position: absolute; width: 100%; height: 100%;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            grid-auto-rows: 100px; gap: 8px; padding: 20px; opacity: 0.15; z-index: 1;
         }
 
         .shelf-book { width: 100%; height: 100%; border-radius: 3px; transition: 0.1s; }
 
-        .ui-layer {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .ui-layer { position: relative; z-index: 10; text-align: center; width: 100%; }
 
-        h1 {
-            color: #d7ccc8;
-            font-size: 2.2rem;
-            margin-bottom: 20px;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
+        h1 { color: #d7ccc8; font-size: 2.2rem; margin-bottom: 20px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 
-        /* 3D Stage */
-        .stage {
-            perspective: 2000px;
-            width: 600px;
-            height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .stage { perspective: 2000px; width: 600px; height: 420px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 
-        /* The Book Container */
         .book {
-            width: var(--book-w);
-            height: var(--book-h);
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: var(--book-w); height: var(--book-h); position: relative;
+            transform-style: preserve-3d; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
             visibility: hidden;
         }
 
         .book.visible { visibility: visible; animation: flyIn 0.8s ease-out; }
-        .book.open { transform: rotateY(0deg); }
+        .book.open { transform: translateX(120px) rotateY(0deg); } /* Shifts right when open to stay centered */
 
-        /* Pages & Cover Shared Styling */
         .leaf {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            transform-origin: left;
-            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            backface-visibility: hidden;
-            box-shadow: 5px 5px 20px rgba(0,0,0,0.4);
-            border-radius: 2px 10px 10px 2px;
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+            transform-origin: left; transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            backface-visibility: hidden; box-shadow: 5px 5px 20px rgba(0,0,0,0.4); border-radius: 2px 10px 10px 2px;
         }
 
-        /* The Right Page */
         .page-right {
             background: linear-gradient(to right, #e6e0d5 0%, var(--paper) 10%, var(--paper) 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-            transform: rotateY(0deg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; transform: rotateY(0deg);
         }
 
-        /* The Left Page */
         .page-left {
             background: linear-gradient(to left, #e6e0d5 0%, var(--paper) 10%, var(--paper) 100%);
-            z-index: 2;
-            transform: rotateY(0deg); 
-            backface-visibility: visible; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-sizing: border-box;
+            z-index: 2; transform: rotateY(0deg); backface-visibility: visible; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box;
         }
 
-        /* The Cover */
         .cover {
-            background: #8d6e63;
-            z-index: 4;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            padding: 30px;
-            font-family: 'Dancing Script', cursive;
-            font-size: 1.5rem;
-            border-left: 5px solid rgba(0,0,0,0.2);
+            background: #8d6e63; z-index: 4; display: flex; align-items: center; justify-content: center;
+            text-align: center; color: white; padding: 20px; font-family: 'Dancing Script', cursive; font-size: 1.5rem;
+            border-left: 5px solid rgba(0,0,0,0.4);
+            /* Setup for fetched cover images */
+            background-size: cover; background-position: center;
+            box-shadow: inset 5px 0 15px rgba(0,0,0,0.3); /* Adds a 3D book spine shadow over the image */
         }
 
-        /* Open Book Animations */
         .book.open .cover { transform: rotateY(-180deg); }
         .book.open .page-left { transform: rotateY(-180deg); }
 
-        /* Interior Details & Text Formatting */
         .book-content {
-            opacity: 0;
-            transition: opacity 0.5s 1.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 20px;
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
+            opacity: 0; transition: opacity 0.5s 1.2s; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; padding: 20px; width: 100%; height: 100%; box-sizing: border-box;
         }
         
         .book.open .book-content { opacity: 1; }
+        .left-content { transform: rotateY(180deg); } /* Un-mirrors text on the left page */
 
-        /* Fix mirroring on the left page when it rotates */
-        .left-content { transform: rotateY(180deg); }
-
-        /* Typography for Book Details */
         .titulo-text { font-size: 1.6rem; color: var(--ink); margin-bottom: 10px; line-height: 1.2; }
         .autor-text { font-size: 1rem; color: #555; font-style: italic; }
         .saga-text { font-family: 'Dancing Script', cursive; font-size: 1.8rem; color: #8d6e63; margin-bottom: 5px; }
         .orden-text { font-size: 1.1rem; color: var(--ink); }
         .divider { width: 50px; height: 2px; background: #cbbca8; margin: 15px auto; }
-        
         .placeholder-text { color: #a09586; font-style: italic; font-size: 0.9rem; }
 
         button {
-            margin-top: 20px;
-            padding: 18px 45px;
-            font-size: 1.2rem;
-            background: #8d6e63;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            font-family: 'Playfair Display', serif;
-            transition: 0.3s;
+            margin-top: 20px; padding: 18px 45px; font-size: 1.2rem; background: #8d6e63; color: white;
+            border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            font-family: 'Playfair Display', serif; transition: 0.3s;
         }
         button:hover { transform: translateY(-3px); background: #a1887f; }
         button:disabled { opacity: 0.5; }
@@ -190,6 +107,8 @@
         }
 
         .highlight { background: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.4); z-index: 5; }
+        
+        .loading-text { font-size: 1rem; opacity: 0.7; margin-top: 10px; font-style: italic; display: none;}
     </style>
 </head>
 <body>
@@ -201,7 +120,6 @@
         
         <div class="stage">
             <div class="book" id="book">
-                <!-- Page Right (Title & Author) -->
                 <div class="leaf page-right">
                     <div class="book-content">
                         <div class="titulo-text" id="titulo-display"></div>
@@ -210,9 +128,7 @@
                     </div>
                 </div>
 
-                <!-- Page Left (Saga & Order) -->
                 <div class="leaf page-left">
-                    <!-- Left content is wrapped here to flip it upright after the page turns -->
                     <div class="book-content left-content">
                         <div class="saga-text" id="saga-display"></div>
                         <div class="orden-text" id="orden-display"></div>
@@ -220,23 +136,20 @@
                     </div>
                 </div>
 
-                <!-- Cover -->
-                <div class="leaf cover" id="cover">Your next adventure awaits...</div>
+                <!-- We wrap the cover text in a span so we can hide it when an image loads -->
+                <div class="leaf cover" id="cover"><span id="cover-text">Your next adventure awaits...</span></div>
             </div>
         </div>
 
         <button id="draw-btn" onclick="startSelection()">Draw a Book</button>
+        <div id="loading-indicator" class="loading-text">Dusting off the cover...</div>
     </div>
 
-    <!-- Music Themes -->
     <audio id="audio-warm" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
     <audio id="audio-cool" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"></audio>
     <audio id="audio-bright" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
 
     <script>
-        // -------------------------------------------------------------
-        // Replace this array with the data from her Google Sheets!
-        // -------------------------------------------------------------
         const booksData = [
             { Titulo: "Todo es eventual", Autor: "Stephen King ", Saga: "", Orden: "" },
             { Titulo: "Carrie", Autor: "Stephen King ", Saga: "", Orden: "" },
@@ -479,10 +392,11 @@
         const library = document.getElementById('library');
         const bookObj = document.getElementById('book');
         const bookCover = document.getElementById('cover');
+        const coverText = document.getElementById('cover-text');
         const statusText = document.getElementById('status');
         const drawBtn = document.getElementById('draw-btn');
+        const loadingIndicator = document.getElementById('loading-indicator');
 
-        // Text Displays
         const tituloDisplay = document.getElementById('titulo-display');
         const autorDisplay = document.getElementById('autor-display');
         const sagaDisplay = document.getElementById('saga-display');
@@ -490,6 +404,9 @@
         const noSagaMsg = document.getElementById('no-saga-msg');
         
         let audioCtx;
+        let currentAudio = null;
+        let preFetchedCoverUrl = null; 
+        let chosenBook = null;
 
         function playPop(pitch) {
             if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -507,22 +424,16 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             
-            osc.start(now);
-            osc.stop(now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
         }
 
-        // Helper: Convert string (like Saga name) to a consistent color Hue (0-360)
         function stringToHue(str) {
             if (!str) return Math.floor(Math.random() * 360);
             let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             return Math.abs(hash) % 360;
         }
 
-        // Generate Library Background (Using visual dots for all books)
-        // If there are few books, we multiply them visually for the background aesthetic
         const visualBooksCount = Math.max(totalBooks, 150); 
         const shelfBooks = [];
         for (let i = 0; i < visualBooksCount; i++) {
@@ -533,7 +444,40 @@
             shelfBooks.push(b);
         }
 
-        let currentAudio = null;
+        // --- ROBUST COVER FETCHING FUNCTION ---
+        async function fetchBookCover(title, author) {
+            const query = encodeURIComponent(`${title} ${author}`);
+            
+            // 1. Try Google Books API (Usually more accurate and higher res)
+            try {
+                const gbRes = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1`);
+                const gbData = await gbRes.json();
+                if (gbData.items && gbData.items.length > 0) {
+                    let img = gbData.items[0].volumeInfo?.imageLinks?.thumbnail;
+                    if (img) {
+                        // Force HTTPS to prevent mixed-content security errors
+                        img = img.replace('http:', 'https:');
+                        // Hack to get slightly higher res from Google Books
+                        return img.replace('&edge=curl', '') + '&zoom=1'; 
+                    }
+                }
+            } catch (e) { console.warn("Google Books API missed:", e); }
+
+            // 2. Try OpenLibrary API as Fallback
+            try {
+                const olRes = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1`);
+                const olData = await olRes.json();
+                if (olData.docs && olData.docs.length > 0) {
+                    const coverId = olData.docs[0].cover_i;
+                    if (coverId) {
+                        return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+                    }
+                }
+            } catch (e) { console.warn("OpenLibrary API missed:", e); }
+
+            // 3. Fail gracefully
+            return null; 
+        }
 
         function startSelection() {
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
@@ -541,15 +485,30 @@
             drawBtn.disabled = true;
             bookObj.classList.remove('open', 'visible');
             statusText.innerText = "Searching the collection...";
+            loadingIndicator.style.display = "block";
             
+            // Reset cover for a new draw
+            bookCover.style.backgroundImage = 'none';
+            coverText.style.display = 'block';
+            coverText.innerText = "Binding the pages...";
+
+            // SECRETLY CHOOSE THE WINNER IMMEDIATELY
+            const randomIndex = Math.floor(Math.random() * totalBooks);
+            chosenBook = booksData[randomIndex];
+
+            // START FETCHING COVER IN THE BACKGROUND WHILE ANIMATION PLAYS
+            preFetchedCoverUrl = null; // reset
+            fetchBookCover(chosenBook.Titulo, chosenBook.Autor).then(url => {
+                preFetchedCoverUrl = url;
+            });
+
+            // Start Roulette Visuals
             let count = 0;
             let lastIdx = -1;
-
             const interval = setInterval(() => {
                 if (lastIdx > -1) shelfBooks[lastIdx].classList.remove('highlight');
                 lastIdx = Math.floor(Math.random() * shelfBooks.length);
                 shelfBooks[lastIdx].classList.add('highlight');
-                
                 playPop(lastIdx);
                 
                 count++;
@@ -562,29 +521,33 @@
         }
 
         function finalizeSelection() {
-            // Pick a random book from your actual data
-            const randomIndex = Math.floor(Math.random() * totalBooks);
-            const chosenBook = booksData[randomIndex];
-
-            // Determine Color based on Saga (or Author if standalone). 
-            // This groups series books into the exact same color & music!
+            loadingIndicator.style.display = "none";
             const seedString = chosenBook.Saga.trim() !== "" ? chosenBook.Saga : chosenBook.Autor;
             const hue = stringToHue(seedString);
             
-            const h = Math.floor(Math.random() * 40) + 320;
-            const w = Math.floor(Math.random() * 30) + 220;
-            bookObj.style.height = h + 'px';
-            bookObj.style.width = w + 'px';
-            bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
+            bookObj.style.height = '360px'; // Standardize size to fit fetched images nicely
+            bookObj.style.width = '240px';
             
-            // Populate the text fields
+            // APPLY THE FETCHED COVER (Or fallback to color)
+            if (preFetchedCoverUrl) {
+                bookCover.style.backgroundImage = `url('${preFetchedCoverUrl}')`;
+                coverText.style.display = 'none'; // hide the fallback text
+                bookCover.style.backgroundColor = `hsl(${hue}, 45%, 15%)`; // Dark behind image
+            } else {
+                bookCover.style.backgroundImage = 'none';
+                bookCover.style.backgroundColor = `hsl(${hue}, 45%, 35%)`;
+                coverText.style.display = 'block';
+                coverText.innerText = chosenBook.Titulo;
+            }
+            
+            // Populate Text Fields
             tituloDisplay.innerText = chosenBook.Titulo;
             autorDisplay.innerText = chosenBook.Autor;
 
             if (chosenBook.Saga.trim() !== "") {
                 sagaDisplay.innerText = chosenBook.Saga;
                 ordenDisplay.innerText = "Book " + chosenBook.Orden;
-                sagaDisplay.style.color = `hsl(${hue}, 45%, 35%)`; // match saga text to cover
+                sagaDisplay.style.color = `hsl(${hue}, 45%, 35%)`; 
                 sagaDisplay.style.display = 'block';
                 ordenDisplay.style.display = 'block';
                 noSagaMsg.style.display = 'none';
@@ -601,22 +564,19 @@
             currentAudio.play();
 
             bookObj.classList.add('visible');
-            statusText.innerText = "A choice has been made!";
+            statusText.innerText = "Your next adventure!";
 
             setTimeout(() => {
                 bookObj.classList.add('open');
-                statusText.innerText = `You are reading ${chosenBook.Titulo}`;
+                statusText.innerText = `${chosenBook.Titulo}`;
                 
                 confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.7 },
-                    colors: [`hsl(${hue}, 45%, 35%)`, '#fff']
+                    particleCount: 150, spread: 70, origin: { y: 0.7 }, colors: [`hsl(${hue}, 45%, 35%)`, '#fff']
                 });
 
                 setTimeout(() => {
                     drawBtn.disabled = false;
-                    drawBtn.innerText = "Draw Again";
+                    drawBtn.innerText = "Draw Another";
                 }, 2500);
             }, 1200);
         }
